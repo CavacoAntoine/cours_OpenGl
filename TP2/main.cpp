@@ -1,6 +1,13 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <glimac/Program.hpp>
+#include <glimac/FilePath.hpp>
+#include <glimac/glm.hpp>
+#include <vector>
+
+const GLuint VERTEX_ATTR_POSITION = 0;
+const GLuint VERTEX_ATTR_COLOR = 1;
 
 int window_width  = 1280;
 int window_height = 720;
@@ -27,8 +34,25 @@ static void size_callback(GLFWwindow* /*window*/, int width, int height)
     window_height = height;
 }
 
-int main()
+struct Vertex2DColor {
+    glm::vec2 position;
+    glm::vec3 color;
+
+    Vertex2DColor() {
+    }
+
+    Vertex2DColor(glm::vec2 position, glm::vec3 color) : position(position), color(color) {
+    }
+};
+
+int main(int argc, char *argv[])
 {
+
+    if(argc < 3 ) {
+        std::cout << "chemin d'accès au fichier VS et FS requis\n";
+        return -1;
+    }
+
     /* Initialize the library */
     if (!glfwInit()) {
         return -1;
@@ -63,10 +87,60 @@ int main()
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
+    glimac::FilePath applicationPath(argv[0]);
+    glimac::Program program = loadProgram(applicationPath.dirPath() + "TP2/shaders/" + argv[1],
+                              applicationPath.dirPath() + "TP2/shaders/" + argv[2]);
+    program.use();
+
+    /* Création d'un triangle */
+    // Sommets
+    std::vector<Vertex2DColor> vertices;
+    vertices.push_back(Vertex2DColor(glm::vec2(-0.5,-0.5), glm::vec3(1 , 0, 0)));
+    vertices.push_back(Vertex2DColor(glm::vec2(0.5,-0.5), glm::vec3(0 , 1, 0)));
+    vertices.push_back(Vertex2DColor(glm::vec2(0,0.5), glm::vec3(0 , 0, 1)));
+
+    // Indices
+    std::vector<int> indices;
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+
+    // Création de l'ibo
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(int), (int *) &indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Création du vbo
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DColor),(Vertex2DColor *) &vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, position));
+    glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, color));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.5f, 0.5f, 1.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
