@@ -5,9 +5,11 @@
 #include <glimac/FilePath.hpp>
 #include <glimac/glm.hpp>
 #include <vector>
+#include <math.h>
 
 const GLuint VERTEX_ATTR_POSITION = 0;
 const GLuint VERTEX_ATTR_COLOR = 1;
+const GLuint VERTEX_ATTR_TEXTURE = 2;
 
 int window_width  = 1280;
 int window_height = 720;
@@ -44,6 +46,169 @@ struct Vertex2DColor {
     Vertex2DColor(glm::vec2 position, glm::vec3 color) : position(position), color(color) {
     }
 };
+
+struct Vertex2DUV {
+    glm::vec2 position;
+    glm::vec2 texture;
+
+    Vertex2DUV() {
+    }
+
+    Vertex2DUV(glm::vec2 position, glm::vec2 texture) : position(position), texture(texture) {
+    }
+};
+
+GLuint triangle2DColor() {
+    /* Création d'un triangle */
+    // Sommets
+    std::vector<Vertex2DColor> vertices;
+    vertices.push_back(Vertex2DColor(glm::vec2(-0.5,-0.5), glm::vec3(1 , 0, 0)));
+    vertices.push_back(Vertex2DColor(glm::vec2(0.5,-0.5), glm::vec3(0 , 1, 0)));
+    vertices.push_back(Vertex2DColor(glm::vec2(0,0.5), glm::vec3(0 , 0, 1)));
+
+    // Indices
+    std::vector<int> indices;
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+
+    // Création de l'ibo
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(int), (int *) &indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Création du vbo
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DColor),(Vertex2DColor *) &vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, position));
+    glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, color));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return vao;
+
+}
+
+glm::mat3 translate(float tx, float ty) {
+  return glm::mat3(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(tx, ty, 1));
+}
+
+glm::mat3 scale(float sx, float sy) {
+  return glm::mat3(glm::vec3(sx, 0, 0), glm::vec3(0, sy, 0), glm::vec3(0, 0, 1));
+}
+
+glm::mat3 rotate(float a) {
+  a = a * M_PI / 180.0;
+  return glm::mat3(glm::vec3(cos(a), sin(a), 0), glm::vec3(-sin(a), cos(a), 0), glm::vec3(0, 0, 1));
+}
+
+GLuint triangle2DTexture() {
+    /* Création d'un triangle */
+    // Sommets
+    std::vector<Vertex2DUV> vertices;
+    vertices.push_back(Vertex2DUV(glm::vec2(-0.5,-0.5), glm::vec2(0 , 0)));
+    vertices.push_back(Vertex2DUV(glm::vec2(0.5,-0.5), glm::vec2(0 , 0)));
+    vertices.push_back(Vertex2DUV(glm::vec2(0,0.5), glm::vec2(0 , 0)));
+
+    // Indices
+    std::vector<int> indices;
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+
+    // Création de l'ibo
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(int), (int *) &indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Création du vbo
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DUV),(Vertex2DUV *) &vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_TEXTURE);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DUV) , (const GLvoid*)offsetof(Vertex2DUV, position));
+    glVertexAttribPointer(VERTEX_ATTR_TEXTURE, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DUV) , (const GLvoid*)offsetof(Vertex2DUV, texture));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return vao;
+
+}
+
+GLuint quad2D() {
+
+    /* Création d'un triangle */
+    // Sommets
+    std::vector<glm::vec2> vertices;
+    vertices.push_back(glm::vec2(-1,-1));
+    vertices.push_back(glm::vec2(-1,1));
+    vertices.push_back(glm::vec2(1,-1));
+    vertices.push_back(glm::vec2(1,1));
+
+    // Indices
+    std::vector<int> indices;
+    indices.push_back(2);
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+    indices.push_back(3);
+    indices.push_back(1);
+
+
+    // Création de l'ibo
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(int), (int *) &indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Création du vbo
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec2),(glm::vec2 *) &vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2) , 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return vao;
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -92,46 +257,13 @@ int main(int argc, char *argv[])
                               applicationPath.dirPath() + "TP2/shaders/" + argv[2]);
     program.use();
 
-    /* Création d'un triangle */
-    // Sommets
-    std::vector<Vertex2DColor> vertices;
-    vertices.push_back(Vertex2DColor(glm::vec2(-0.5,-0.5), glm::vec3(1 , 0, 0)));
-    vertices.push_back(Vertex2DColor(glm::vec2(0.5,-0.5), glm::vec3(0 , 1, 0)));
-    vertices.push_back(Vertex2DColor(glm::vec2(0,0.5), glm::vec3(0 , 0, 1)));
+    GLint locationUTime = glGetUniformLocation(program.getGLId(), "uModelMatrix");
 
-    // Indices
-    std::vector<int> indices;
-    indices.push_back(0);
-    indices.push_back(1);
-    indices.push_back(2);
-
-    // Création de l'ibo
-    GLuint ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(int), (int *) &indices[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // Création du vbo
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DColor),(Vertex2DColor *) &vertices[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, position));
-    glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor) , (const GLvoid*)offsetof(Vertex2DColor, color));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
+    float angle = 0;
+    glm::mat3 uModelMatrix;
+    
+    
+    GLuint vao = triangle2DTexture();
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
@@ -139,8 +271,26 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vao);
+
+        uModelMatrix = translate(-10, -10) * scale(0.25, 0.25) * rotate(angle);
+        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        uModelMatrix = translate(-10, 10) * scale(0.25, 0.25) * rotate(-angle);
+        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
+        //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        uModelMatrix = translate(10, 10) * scale(0.25, 0.25) * rotate(angle);
+        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
+        uModelMatrix = translate(10, -10) * scale(0.25, 0.25) * rotate(-angle);
+        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
+        //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
         glBindVertexArray(0);
+
+        angle++;
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
