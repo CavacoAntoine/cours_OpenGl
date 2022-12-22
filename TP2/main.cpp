@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
+#include <glimac/Image.hpp>
 #include <glimac/glm.hpp>
 #include <vector>
 #include <math.h>
@@ -120,9 +121,9 @@ GLuint triangle2DTexture() {
     /* Création d'un triangle */
     // Sommets
     std::vector<Vertex2DUV> vertices;
-    vertices.push_back(Vertex2DUV(glm::vec2(-0.5,-0.5), glm::vec2(0 , 0)));
-    vertices.push_back(Vertex2DUV(glm::vec2(0.5,-0.5), glm::vec2(0 , 0)));
-    vertices.push_back(Vertex2DUV(glm::vec2(0,0.5), glm::vec2(0 , 0)));
+    vertices.push_back(Vertex2DUV(glm::vec2(-0.5, -0.5), glm::vec2(0 , 1)));
+    vertices.push_back(Vertex2DUV(glm::vec2(0.5, -0.5), glm::vec2(1 , 1)));
+    vertices.push_back(Vertex2DUV(glm::vec2(0, 0.5), glm::vec2(0.5 , 0)));
 
     // Indices
     std::vector<int> indices;
@@ -257,7 +258,23 @@ int main(int argc, char *argv[])
                               applicationPath.dirPath() + "TP2/shaders/" + argv[2]);
     program.use();
 
+    std::unique_ptr<glimac::Image> triforce = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/triforce.png");
+    if(triforce == NULL){
+        std::cout <<"Problème chargement image";
+        return -1;
+    }
+
+    GLuint to;
+    glGenTextures(1, &to);
+    glBindTexture(GL_TEXTURE_2D, to);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, triforce -> getWidth(), triforce -> getHeight(), 0, GL_RGBA, GL_FLOAT, triforce -> getPixels());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(1,0);
+
     GLint locationUTime = glGetUniformLocation(program.getGLId(), "uModelMatrix");
+    GLint locationUTexture = glGetUniformLocation(program.getGLId(), "uTexture");
+
 
     float angle = 0;
     glm::mat3 uModelMatrix;
@@ -271,26 +288,20 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vao);
+        glBindTexture(GL_TEXTURE_2D, to);
+        glUniform1i(locationUTexture, 0);
 
-        uModelMatrix = translate(-10, -10) * scale(0.25, 0.25) * rotate(angle);
+        uModelMatrix = rotate(angle);
         glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-
-        uModelMatrix = translate(-10, 10) * scale(0.25, 0.25) * rotate(-angle);
-        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
-        //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-
-        uModelMatrix = translate(10, 10) * scale(0.25, 0.25) * rotate(angle);
-        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-
-        uModelMatrix = translate(10, -10) * scale(0.25, 0.25) * rotate(-angle);
-        glUniformMatrix3fv(locationUTime, 1, GL_FALSE , glm::value_ptr(uModelMatrix));
-        //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
 
         angle++;
+
+        if(angle >= 360)
+            angle = 0;
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -298,6 +309,7 @@ int main(int argc, char *argv[])
         glfwPollEvents();
     }
 
+    glDeleteTextures(1, &to);
     glfwTerminate();
     return 0;
 }
