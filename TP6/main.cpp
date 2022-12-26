@@ -4,6 +4,7 @@
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
 #include <glimac/Sphere.hpp>
+#include <glimac/Cylinder.hpp>
 #include <glimac/common.hpp>
 #include <glimac/glm.hpp>
 #include <glimac/getTime.hpp>
@@ -162,7 +163,7 @@ int main(int argc, char * argv[])
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(1,0);
 
-    glimac::Sphere sphere = glimac::Sphere(1,32,32);
+    glimac::Cylinder sphere = glimac::Cylinder(5,0.8,32,32);
 
     // Création du vbo
     GLuint vbo;
@@ -218,7 +219,8 @@ int main(int argc, char * argv[])
 
         // Earth
         MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0,0,-5));
-        MVMatrix = glm::rotate(MVMatrix, glimac::getTime(), glm::vec3(0, 1, 0));
+        MVMatrix = glm::rotate(MVMatrix, 90.f, glm::vec3(1, 0, 0));
+        MVMatrix = glm::rotate(MVMatrix, glimac::getTime(), glm::vec3(0, 0, 1));
         NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
