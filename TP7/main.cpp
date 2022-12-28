@@ -46,11 +46,13 @@ static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double y
     trackballCamera.moveFront(-yoffset);
 }
 
-static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double /*ypos*/)
+static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 {
     if(isButtonRightPress) {
-        trackballCamera.rotateLeft((xpos - bXpos)/100);
-        //trackballCamera.rotateUp((ypos - bYpos)/100);
+        trackballCamera.rotateLeft(xpos-bXpos);
+        trackballCamera.rotateUp(ypos - bYpos);
+        bXpos = xpos;
+        bYpos = ypos;
     }
 }
 
