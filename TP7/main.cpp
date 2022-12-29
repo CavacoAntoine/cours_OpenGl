@@ -10,49 +10,69 @@
 #include <glimac/getTime.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/TrackballCamera.hpp>
+#include <glimac/FreeflyCamera.hpp>
 #include <glm/gtc/random.hpp>
 #include <vector>
 #include <iomanip>
+#include <functional>
 
 int window_width  = 1280;
 int window_height = 720;
 
-glimac::TrackballCamera trackballCamera = glimac::TrackballCamera();
+glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
+
+const int NUM_KEYS = 4;
+const int KEYS[NUM_KEYS] = {GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D};
+
+std::function<void()> keyFuncs[NUM_KEYS] = {
+    std::bind(&glimac::FreeflyCamera::moveFront, freeflyCamera, 10),
+    std::bind(&glimac::FreeflyCamera::moveLeft, freeflyCamera, 10),
+    std::bind(&glimac::FreeflyCamera::moveFront, freeflyCamera, -1),
+    std::bind(&glimac::FreeflyCamera::moveLeft, freeflyCamera, -1),
+};
+
 bool isButtonRightPress = false; 
-double bXpos;
-double bYpos;
+double pPos[2] = {false}; // x and y
 
 const GLuint VERTEX_ATTR_POSITION = 0;
 const GLuint VERTEX_ATTR_COLOR = 1;
 const GLuint VERTEX_ATTR_TEXCOORDS = 2;
 const GLuint VERTEX_ATTR_NORMAL = 3;
 
-static void key_callback(GLFWwindow* /*window*/, int /*key*/, int /*scancode*/, int /*action*/, int /*mods*/)
-{   
+static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int action, int /*mods*/)
+{
+    for(int i = 0; i < NUM_KEYS; i++) {
+        if(key == KEYS[i]) {
+            if(action == GLFW_PRESS) {
+                keyFuncs[i]();
+            } else if (action == GLFW_REPEAT) {
+                keyFuncs[i]();
+            }
+        }
+    }    
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int /*mods*/)
 {
     if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS && !isButtonRightPress) {
         isButtonRightPress = true;
-        glfwGetCursorPos(window, &bXpos, &bYpos);
+        glfwGetCursorPos(window, &pPos[0], &pPos[1]);
     } else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
         isButtonRightPress = false;
     }
 }
 
-static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
+static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double /*yoffset*/)
 {
-    trackballCamera.moveFront(-yoffset);
 }
 
 static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 {
     if(isButtonRightPress) {
-        trackballCamera.rotateLeft(xpos-bXpos);
-        trackballCamera.rotateUp(ypos - bYpos);
-        bXpos = xpos;
-        bYpos = ypos;
+        freeflyCamera.rotateLeft(xpos - pPos[0]);
+        freeflyCamera.rotateUp(ypos - pPos[1]);
+        pPos[0] = xpos;
+        pPos[1] = ypos;
     }
 }
 
@@ -232,7 +252,7 @@ int main(int argc, char * argv[])
         glClearColor(0.75f, 0.75f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        VMatrix = trackballCamera.getViewMatrix();
+        VMatrix = freeflyCamera.getViewMatrix();
 
         glBindVertexArray(vao);
 
