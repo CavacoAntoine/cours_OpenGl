@@ -25,10 +25,10 @@ const int NUM_KEYS = 4;
 const int KEYS[NUM_KEYS] = {GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D};
 
 std::function<void()> keyFuncs[NUM_KEYS] = {
-    std::bind(&glimac::FreeflyCamera::moveFront, freeflyCamera, 10),
-    std::bind(&glimac::FreeflyCamera::moveLeft, freeflyCamera, 10),
-    std::bind(&glimac::FreeflyCamera::moveFront, freeflyCamera, -1),
-    std::bind(&glimac::FreeflyCamera::moveLeft, freeflyCamera, -1),
+    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera, 1),
+    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, 1),
+    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera,-1),
+    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, -1),
 };
 
 bool isButtonRightPress = false; 
@@ -70,7 +70,7 @@ static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double
 {
     if(isButtonRightPress) {
         freeflyCamera.rotateLeft(xpos - pPos[0]);
-        freeflyCamera.rotateUp(ypos - pPos[1]);
+        //freeflyCamera.rotateUp(ypos - pPos[1]);
         pPos[0] = xpos;
         pPos[1] = ypos;
     }

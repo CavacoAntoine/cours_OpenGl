@@ -6,20 +6,19 @@ namespace glimac {
 
 
     void FreeflyCamera::computeDirectionVectors() {
-        this->m_FrontVector =  glm::vec3(glm::cos(this->m_fTheta) * glm::sin(this->m_fPhi), glm::sin(this->m_fPhi), glm::cos(this->m_fTheta) * glm::cos(this->m_fPhi));
+        this->m_FrontVector =  glm::vec3(glm::cos(this->m_fTheta) * glm::sin(this->m_fPhi), glm::sin(this->m_fTheta), glm::cos(this->m_fTheta) * glm::cos(this->m_fPhi));
         this->m_LeftVector = glm::vec3(glm::sin(this->m_fPhi + M_PI_2), 0, glm::cos(this->m_fPhi + M_PI_2));
         this->m_UpVector = glm::cross(this->m_FrontVector, this->m_LeftVector);
         
     }
 
     void FreeflyCamera::moveLeft(float t) {
-        this->m_Position += t * m_LeftVector;
-        this->computeDirectionVectors();
+        this->m_Position += (t * m_LeftVector);
     }
 
     void FreeflyCamera::moveFront(float t) {
-        this->m_Position += t * m_FrontVector;
-        this->computeDirectionVectors();
+        this->m_Position += (t * m_FrontVector);
+        
     }
 
     void FreeflyCamera::rotateLeft(float degrees) {
