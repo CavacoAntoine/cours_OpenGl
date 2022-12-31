@@ -21,6 +21,10 @@ namespace glimac {
         
     }
 
+    void FreeflyCamera::moveUp(float t) {
+        this->m_Position += (t * m_UpVector);
+    }
+
     void FreeflyCamera::rotateLeft(float degrees) {
         this->m_fPhi += glm::radians(degrees);
         this->computeDirectionVectors();

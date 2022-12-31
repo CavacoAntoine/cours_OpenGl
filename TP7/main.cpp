@@ -15,20 +15,26 @@
 #include <vector>
 #include <iomanip>
 #include <functional>
+#include <thread>
 
 int window_width  = 1280;
 int window_height = 720;
 
 glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
 
-const int NUM_KEYS = 4;
-const int KEYS[NUM_KEYS] = {GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D};
+bool stop_key_loop = false;
+const float SPEED_TRANSLATE = 0.05;
+const int NUM_KEYS = 6;
+const int KEYS[NUM_KEYS] = {GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT};
+bool keyPress[NUM_KEYS] = {false};
 
 std::function<void()> keyFuncs[NUM_KEYS] = {
-    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera, 1),
-    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, 1),
-    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera,-1),
-    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, -1),
+    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera, SPEED_TRANSLATE),
+    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, SPEED_TRANSLATE),
+    std::bind(&glimac::FreeflyCamera::moveFront, &freeflyCamera,-SPEED_TRANSLATE),
+    std::bind(&glimac::FreeflyCamera::moveLeft, &freeflyCamera, -SPEED_TRANSLATE),
+    std::bind(&glimac::FreeflyCamera::moveUp, &freeflyCamera, SPEED_TRANSLATE),
+    std::bind(&glimac::FreeflyCamera::moveUp, &freeflyCamera, -SPEED_TRANSLATE),
 };
 
 bool isButtonRightPress = false; 
@@ -44,12 +50,23 @@ static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int 
     for(int i = 0; i < NUM_KEYS; i++) {
         if(key == KEYS[i]) {
             if(action == GLFW_PRESS) {
-                keyFuncs[i]();
-            } else if (action == GLFW_REPEAT) {
-                keyFuncs[i]();
+                keyPress[i] = true;
+            } else if (action == GLFW_RELEASE) {
+                keyPress[i] = false;
             }
         }
     }    
+}
+
+static void key_loop() {
+    while(!stop_key_loop) {
+        for (int i = 0; i < NUM_KEYS; i++) {
+            if(keyPress[i]) {
+                keyFuncs[i]();
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int /*mods*/)
@@ -69,8 +86,8 @@ static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double /
 static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 {
     if(isButtonRightPress) {
-        freeflyCamera.rotateLeft(xpos - pPos[0]);
-        //freeflyCamera.rotateUp(ypos - pPos[1]);
+        freeflyCamera.rotateLeft((xpos - pPos[0])/10);
+        freeflyCamera.rotateUp((ypos - pPos[1])/10);
         pPos[0] = xpos;
         pPos[1] = ypos;
     }
@@ -245,8 +262,9 @@ int main(int argc, char * argv[])
         }
     }
 
-    
-    
+    /* Launch thread to do input keyboard */
+    std::thread thread_key(key_loop);
+        
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.75f, 0.75f, 0.f, 1.f);
@@ -306,6 +324,9 @@ int main(int argc, char * argv[])
         glfwPollEvents();
     }
     
+    stop_key_loop = true;
+    thread_key.join();
+
     glDeleteTextures(1, &tEarth);
     glDeleteTextures(1, &tMoon);
     glDeleteTextures(1, &tCloud);
