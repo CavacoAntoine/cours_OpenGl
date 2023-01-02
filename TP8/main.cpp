@@ -150,11 +150,12 @@ struct DirectionLightProgram {
     GLint uShininess;
 
     GLint uLightDir_vs;
+    GLint uLightPos_vs;
     GLint uLightIntensity;
 
     DirectionLightProgram(const glimac::FilePath& applicationPath):
         m_Program(loadProgram(applicationPath.dirPath() + "TP8/shaders/3D.vs.glsl",
-                              applicationPath.dirPath() + "TP8/shaders/directionallight.fs.glsl")) {
+                              applicationPath.dirPath() + "TP8/shaders/light.fs.glsl")) {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
@@ -163,6 +164,7 @@ struct DirectionLightProgram {
         uKs = glGetUniformLocation(m_Program.getGLId(), "uKs");
         uShininess = glGetUniformLocation(m_Program.getGLId(), "uShininess");
         uLightDir_vs = glGetUniformLocation(m_Program.getGLId(), "uLightDir_vs");
+        uLightPos_vs = glGetUniformLocation(m_Program.getGLId(), "uLightPos_vs");
         uLightIntensity = glGetUniformLocation(m_Program.getGLId(), "uLightIntensity");
     }
 };
@@ -301,7 +303,7 @@ int main(int argc, char * argv[])
         
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.75f, 0.75f, 0.f, 1.f);
+        //glClearColor(0.75f, 0.75f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         VMatrix = freeflyCamera.getViewMatrix();
@@ -316,11 +318,13 @@ int main(int argc, char * argv[])
 
         glUniform3f(earthProgram.uKd, 0.5, 0.5, 0.5);
         glUniform3f(earthProgram.uKs, 0, 0, 0);
-        glUniform1f(earthProgram.uShininess, 0.1);
+        glUniform1f(earthProgram.uShininess, 32);
 
         glm::vec4 lightDir = VMatrix * glm::vec4(1, 1, 1, 0);
         glUniform3f(earthProgram.uLightDir_vs, lightDir.x, lightDir.y, lightDir.z);
-        glUniform3f(earthProgram.uLightIntensity, 1, 1, 0);
+        glUniform3f(earthProgram.uLightIntensity, 1, 1, 1);
+        glm::vec4 lightPos = VMatrix * glm::vec4(1, 1, 1, 0);
+        glUniform3f(earthProgram.uLightPos_vs, lightPos.x , lightPos.y, lightPos.z);
 
         // Earth
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0));
