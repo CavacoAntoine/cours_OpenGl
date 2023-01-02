@@ -296,8 +296,6 @@ int main(int argc, char * argv[])
         }
     }
 
-    glm::vec3 dirLight = glm::vec3(1,1,1);
-
     /* Launch thread to do input keyboard */
     std::thread thread_key(key_loop);
         
@@ -316,11 +314,13 @@ int main(int argc, char * argv[])
         glUniform1i(earthProgram.uTexture, 0);
         //glUniform1i(earthProgram.uCloudTexture, 1);
 
-        glUniform3f(earthProgram.uKd, 0.5f, 0.5f, 0.5f);
+        glUniform3f(earthProgram.uKd, 0.5, 0.5, 0.5);
         glUniform3f(earthProgram.uKs, 0, 0, 0);
-        glUniform3f(earthProgram.uShininess, 0.1f, 0.1f, 0.1f);
+        glUniform1f(earthProgram.uShininess, 0.1);
 
-        //Finir les variable uniforme ici
+        glm::vec4 lightDir = VMatrix * glm::vec4(1, 1, 1, 0);
+        glUniform3f(earthProgram.uLightDir_vs, lightDir.x, lightDir.y, lightDir.z);
+        glUniform3f(earthProgram.uLightIntensity, 1, 1, 0);
 
         // Earth
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0));
@@ -336,7 +336,7 @@ int main(int argc, char * argv[])
         //glBindTexture(GL_TEXTURE_2D, tCloud);
 
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-
+/*
         moonProgram.m_Program.use();
         for(int i = 0; i<32; i++) {
             // Moon
@@ -356,7 +356,7 @@ int main(int argc, char * argv[])
 
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         }
-
+*/
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
 

@@ -19,10 +19,17 @@ vec3 blinnPhong() {
   // wi => uLightDir_vs normalize
   // Li => uLightIntensity;
   // dot pour produit scalaire et pow pour la puissance
+  // m1 = Kd(wi * N)
+  // m2 = ks * (half * N)^shine
+  // Li( m1 + m2)
+  vec3 wi = normalize(uLightDir_vs);
   vec3 wo = normalize(-vFragPosition_vs);
-  return dot(uLightIntensity, uKd * (dot(uLightDir_vs, vFragNormal_vs)) + dot(uKs, pow(dot((wo + uLightDir_vs)/2), vFragNormal_vs), uShininess));
+  vec3 halfVector = (wo + wi) / 2;
+  vec3 m1 = uKd * dot(wi, vFragNormal_vs);
+  vec3 m2 = uKs * pow(dot(halfVector, vFragNormal_vs), uShininess);
+  return uLightIntensity * (m1 + m2);
 }
 
 void main() {
-  fFragColor = blinnPhong();
+  fFragColor = blinnPhong() + texture(uTexture, vFragTexCoords).xyz;
 };
