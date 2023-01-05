@@ -17,6 +17,14 @@ class EditProgram {
             this->adduLocation("uMVPMatrix");
             this->adduLocation("uMVMatrix");
             this->adduLocation("uNormalMatrix");
+            this->adduLocation("uLightColor");
+            //this->adduLocation("uLightPos");
+            this->adduLocation("uLightDir");
+            this->adduLocation("uViewPos");
+            this->adduLocation("material.ambient");
+            this->adduLocation("material.diffuse");
+            this->adduLocation("material.specular");
+            this->adduLocation("material.shininess");
         }
 
         void adduLocation(std::string name);
