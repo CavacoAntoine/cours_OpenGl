@@ -35,14 +35,14 @@ in vec3 vFragPosition_vs;
 in vec3 vFragNormal_vs;
 
 uniform sampler2D uTextures[MAX_TEXTURES];
-uniform int uNbrTextures;
 
 uniform vec3 uViewPos;
 uniform Material material;
 
+uniform bool uIsDirLight = false;
 uniform DirLight uDirLight;
 uniform PointLight uPointLights[MAX_LIGHTS];
-uniform int uNbrPointLights;
+uniform int uNbrPointLights = 0;
 
 out vec3 fFragColor;
 
@@ -99,16 +99,21 @@ void main()
     vec3 norm = normalize(vFragNormal_vs);
     vec3 viewDir = normalize(uViewPos - vFragPosition_vs);
 
+    vec3 result = vec3(1);
+
     // phase 1: Directional lighting
-    vec3 result = CalcDirLight(uDirLight, norm, viewDir);
+    if(uIsDirLight) {
+        result = CalcDirLight(uDirLight, norm, viewDir);
+    }
     
     // phase 2: Point lights
-    for(int i = 0; i < uNbrPointLights; i++)
-        result += CalcPointLight(pointLights[i], norm, vFragPosition_vs, viewDir);      
-
-    for(int i = 0; i < uNbrTextures) {
-        result *= texture(uTextures[i], vFragTexCoords).xyz;
+    for(int i = 0; i < uNbrPointLights; i++) {
+        result += CalcPointLight(uPointLights[i], norm, vFragPosition_vs, viewDir);      
     }
+        
 
-    fFragColor = result;
+    // phase 3: Spot light
+    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+
+    fFragColor = result * (texture(uTextures[0], vFragTexCoords).xyz);
 }
