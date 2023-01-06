@@ -1,5 +1,7 @@
 #version 330 core
 
+#define MAX 10
+
 struct Material {
     vec3 ambient;
     vec3 diffuse;
@@ -13,13 +15,12 @@ in vec3 vFragNormal_vs;
 
 uniform sampler2D uTexture;
 uniform vec3 uLightColor;
-uniform vec3 uLightPos;
 uniform vec3 uLightDir;
+uniform vec3 uLightPos;
 uniform vec3 uViewPos;
 uniform Material material;
 
 out vec3 fFragColor;
-
 
 
 void main()
@@ -29,7 +30,7 @@ void main()
 
     // diffuse 
     vec3 norm = normalize(vFragNormal_vs);
-    vec3 lightDir = normalize(uLightPos - vFragPosition_vs);
+    vec3 lightDir = normalize(-uLightDir);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = uLightColor * (diff * material.diffuse);
 

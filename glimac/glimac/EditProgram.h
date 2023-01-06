@@ -17,9 +17,6 @@ class EditProgram {
             this->adduLocation("uMVPMatrix");
             this->adduLocation("uMVMatrix");
             this->adduLocation("uNormalMatrix");
-            this->adduLocation("uLightColor");
-            //this->adduLocation("uLightPos");
-            this->adduLocation("uLightDir");
             this->adduLocation("uViewPos");
             this->adduLocation("material.ambient");
             this->adduLocation("material.diffuse");
@@ -36,6 +33,9 @@ class EarthProgram : public EditProgram {
         EarthProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS) : EditProgram(applicationPath, fpVS, fpFS) {            
             this->adduLocation("uTexture1");
             this->adduLocation("uTexture2");
+            this->adduLocation("uLightColor");
+            this->adduLocation("uLightPos");
+            this->adduLocation("uLightDir");
         }
 };
 
@@ -43,29 +43,18 @@ class MoonProgram : public EditProgram {
     public:
         MoonProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS) : EditProgram(applicationPath, fpVS, fpFS) {            
             this->adduLocation("uTexture");
+            this->adduLocation("uLightColor");
+            this->adduLocation("uLightPos");
+            this->adduLocation("uLightDir");
         }
 };
 
-class DirectionalLightProgram : public EditProgram {
+class LightsTextsProgram : public EditProgram {
     public:
-        DirectionalLightProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS) : EditProgram(applicationPath, fpVS, fpFS) {            
+        LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS) : EditProgram(applicationPath, fpVS, fpFS) {            
             this->adduLocation("uTexture");
-            this->adduLocation("uKd");
-            this->adduLocation("uKs");
-            this->adduLocation("uShininess");
-            this->adduLocation("uLightDir_vs");
-            this->adduLocation("uLightIntensity");
-        }
-};
-
-class PonctualLightProgram : public EditProgram {
-    public:
-        PonctualLightProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS) : EditProgram(applicationPath, fpVS, fpFS) {            
-            this->adduLocation("uTexture");
-            this->adduLocation("uKd");
-            this->adduLocation("uKs");
-            this->adduLocation("uShininess");
-            this->adduLocation("uLightPos_vs");
-            this->adduLocation("uLightIntensity");
+            this->adduLocation("uLightColor");
+            this->adduLocation("uLightPos");
+            this->adduLocation("uLightDir");
         }
 };

@@ -121,7 +121,7 @@ int main(int argc, char * argv[])
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
-    GLFWwindow* window = glfwCreateWindow(window_width, window_height, "TP9", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(window_width, window_height, "TP8", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return -1;
@@ -143,8 +143,8 @@ int main(int argc, char * argv[])
     glfwSetWindowSizeCallback(window, &size_callback);
 
     glimac::FilePath applicationPath(argv[0]);
-    EditProgram earthProgram = EarthProgram(applicationPath, "TP6/shaders/3D.vs.glsl", "TP6/shaders/multiTex3D.fs.glsl");
-    EditProgram moonProgram = MoonProgram(applicationPath, "TP6/shaders/3D.vs.glsl", "TP6/shaders/tex3D.fs.glsl");
+    EditProgram earthProgram = EarthProgram(applicationPath, "TP6/shaders/3D.vs.glsl", "TP8/shaders/directLight2Text.fs.glsl");
+    EditProgram moonProgram = MoonProgram(applicationPath, "TP6/shaders/3D.vs.glsl", "TP8/shaders/directLightText.fs.glsl");
 
     std::unique_ptr<glimac::Image> earth = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/EarthMap.jpg");
     if(earth == NULL){
@@ -228,6 +228,10 @@ int main(int argc, char * argv[])
     /* Launch thread to do input keyboard */
     std::thread thread_key(key_loop);
         
+    /* light Position */
+    glm::vec4 lightPos(1, 1, 1, 0);
+    
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.75f, 0.75f, 0.f, 1.f);
@@ -235,10 +239,20 @@ int main(int argc, char * argv[])
 
         VMatrix = freeflyCamera.getViewMatrix();
 
+        glm::vec4 uLightPos = VMatrix * lightPos;
+
         glBindVertexArray(vao);
 
-
         earthProgram.m_Program.use();
+        glUniform3f(earthProgram.getLocation("uLightColor"), 1, 1, 1);
+        //glUniform3f(earthProgram.getLocation("uLightPos"), uLightPos.x, uLightPos.y, uLightPos.z);
+        glUniform3f(earthProgram.getLocation("uLightDir"), uLightPos.x, uLightPos.y, uLightPos.z);
+        glUniform3f(earthProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
+        glUniform3f(earthProgram.getLocation("material.ambient"), 0.4, 0.4, 0.4);
+        glUniform3f(earthProgram.getLocation("material.diffuse"), 0.75, 0.75, 1.0);
+        glUniform3f(earthProgram.getLocation("material.specular"), 1.0, 1.0, 1.0);
+        glUniform1f(earthProgram.getLocation("material.shininess"), 10.0);
+        
         
         glUniform1i(earthProgram.getLocation("uTexture1"), 0);
         glUniform1i(earthProgram.getLocation("uTexture2"), 1);
@@ -262,6 +276,14 @@ int main(int argc, char * argv[])
         for(int i = 0; i<32; i++) {
             // Moon
             glUniform1i(moonProgram.getLocation("uTexture"), 0);
+            glUniform3f(moonProgram.getLocation("uLightColor"), 1, 1, 1);
+            //glUniform3f(moonProgram.getLocation("uLightPos"), uLightPos.x, uLightPos.y, uLightPos.z);
+            glUniform3f(moonProgram.getLocation("uLightDir"), uLightPos.x, uLightPos.y, uLightPos.z);
+            glUniform3f(moonProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
+            glUniform3f(moonProgram.getLocation("material.ambient"), 0.4, 0.4, 0.4);
+            glUniform3f(moonProgram.getLocation("material.diffuse"), 0.5, 0.5, 0.5);
+            glUniform3f(moonProgram.getLocation("material.specular"), 0.8, 0.8, 0.8);
+            glUniform1f(moonProgram.getLocation("material.shininess"), 10.0);
 
             glm::mat4 moonMMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)); // Translation
             moonMMatrix = glm::rotate(moonMMatrix, glimac::getTime(), glm::normalize(random[i])); // Translation * Rotation
