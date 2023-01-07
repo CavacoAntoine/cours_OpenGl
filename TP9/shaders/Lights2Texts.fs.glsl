@@ -28,6 +28,21 @@ struct PointLight {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+};
+
+struct SpotLight {
+    vec3  position;
+    vec3  direction;
+    float cutOff;
+    float outerCutOff;
+
+    float constant;
+    float linear;
+    float quadratic;  
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 }; 
 
 in vec2 vFragTexCoords;
@@ -43,6 +58,9 @@ uniform bool uIsDirLight = false;
 uniform DirLight uDirLight;
 uniform PointLight uPointLights[MAX_LIGHTS];
 uniform int uNbrPointLights = 0;
+uniform SpotLight uSpotLights[MAX_LIGHTS];
+uniform int uNbrSpotLights = 0;
+
 
 out vec3 fFragColor;
 
@@ -93,17 +111,54 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     return (ambient + diffuse + specular);
 }
 
+vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+{
+    vec3 lightDir = normalize(light.position - fragPos);
+    float theta = dot(lightDir, normalize(-light.direction));
+    float epsilon   = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0); 
+    
+    if(theta > light.cutOff) 
+    {       
+        // diffuse shading
+        float diff = max(dot(normal, lightDir), 0.0);
+        
+        // specular shading
+        vec3 reflectDir = reflect(-lightDir, normal);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        
+        // attenuation
+        float distance    = length(light.position - fragPos);
+        float attenuation = 1.0 / (light.constant + light.linear * distance + 
+                    light.quadratic * (distance * distance));    
+        
+        // combine results
+        vec3 diffuse  = light.diffuse  * diff * material.diffuse;
+        vec3 specular = light.specular * spec * material.specular;
+        diffuse  *= attenuation;
+        diffuse  *= intensity;
+        specular *= attenuation;
+        specular *= intensity;
+
+        return (diffuse + specular);
+    }
+
+    
+    return vec3(0);
+    
+}
+
 void main()
 {
     // properties
     vec3 norm = normalize(vFragNormal_vs);
     vec3 viewDir = normalize(uViewPos - vFragPosition_vs);
 
-    vec3 result = vec3(1);
+    vec3 result = vec3(0);
 
     // phase 1: Directional lighting
     if(uIsDirLight) {
-        result = CalcDirLight(uDirLight, norm, viewDir);
+        result = CalcDirLight(uDirLight, norm, viewDir);   
     }
     
     // phase 2: Point lights
@@ -113,7 +168,9 @@ void main()
         
 
     // phase 3: Spot light
-    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+    for(int i = 0; i < uNbrSpotLights; i++) {
+        result += CalcSpotLight(uSpotLights[i], norm, vFragPosition_vs, viewDir);
+    }
 
     fFragColor = result * (texture(uTextures[0], vFragTexCoords).xyz + texture(uTextures[1], vFragTexCoords).xyz);
 }

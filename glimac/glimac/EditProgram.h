@@ -54,7 +54,9 @@ class MoonProgram : public EditProgram {
 
 class LightsTextsProgram : public EditProgram {
     public:
-        LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS, bool isDirLight, int nbrTextures, int nbrPointLights) : EditProgram(applicationPath, fpVS, fpFS) {
+        LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS, bool isDirLight, int nbrTextures, int nbrPointLights, int nbrSpotLights) : EditProgram(applicationPath, fpVS, fpFS) {
+            this->m_Program.use();
+
             // Location of texture values
             for(int i = 0; i < nbrTextures; i++) {
                 this->adduLocation(std::string("uTextures[" + std::to_string(i) + "]"));
@@ -67,6 +69,26 @@ class LightsTextsProgram : public EditProgram {
                 std::string base("uPointLights[" + std::to_string(i) + "]");
                 this->adduLocation(std::string(base + ".position"));
                 
+                this->adduLocation(std::string(base + ".constant"));
+                this->adduLocation(std::string(base + ".linear"));
+                this->adduLocation(std::string(base + ".quadratic"));
+
+                this->adduLocation(std::string(base + ".ambient"));
+                this->adduLocation(std::string(base + ".diffuse"));
+                this->adduLocation(std::string(base + ".specular"));
+            }
+
+            // Location of spot light values
+            this->adduLocation(std::string("uNbrSpotLights"));
+            glUniform1i(this->getLocation("uNbrSpotLights"), nbrSpotLights);
+            for(int i = 0; i < nbrSpotLights; i++) {
+                std::string base("uSpotLights[" + std::to_string(i) + "]");
+                this->adduLocation(std::string(base + ".position"));
+                this->adduLocation(std::string(base + ".direction"));
+                this->adduLocation(std::string(base + ".cutOff"));
+                this->adduLocation(std::string(base + ".outerCutOff"));
+                
+
                 this->adduLocation(std::string(base + ".constant"));
                 this->adduLocation(std::string(base + ".linear"));
                 this->adduLocation(std::string(base + ".quadratic"));
