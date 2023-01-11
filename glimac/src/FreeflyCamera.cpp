@@ -14,15 +14,17 @@ namespace glimac {
 
     void FreeflyCamera::moveLeft(float t) {
         this->m_Position += (t * m_LeftVector);
+        this->notUnderZero();
     }
 
     void FreeflyCamera::moveFront(float t) {
         this->m_Position += (t * m_FrontVector);
-        
+        this->notUnderZero();        
     }
 
     void FreeflyCamera::moveUp(float t) {
         this->m_Position += (t * m_UpVector);
+        this->notUnderZero();
     }
 
     void FreeflyCamera::rotateLeft(float degrees) {
@@ -37,6 +39,12 @@ namespace glimac {
 
     glm::mat4 FreeflyCamera::getViewMatrix() const {
         return glm::lookAt(this->m_Position, this->m_Position + this->m_FrontVector, this->m_UpVector);
+    }
+
+    void FreeflyCamera::notUnderZero() {
+        if(this->m_Position.y <0.5) {
+            this->m_Position.y = 0.5;
+        }
     }
 
 }
