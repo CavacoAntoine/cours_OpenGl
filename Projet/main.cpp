@@ -43,11 +43,6 @@ std::function<void()> keyFuncs[NUM_KEYS] = {
 bool isButtonRightPress = false; 
 double pPos[2] = {false}; // x and y
 
-const GLuint VERTEX_ATTR_POSITION = 0;
-const GLuint VERTEX_ATTR_COLOR = 1;
-const GLuint VERTEX_ATTR_TEXCOORDS = 2;
-const GLuint VERTEX_ATTR_NORMAL = 3;
-
 static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int action, int /*mods*/)
 {
     for(int i = 0; i < NUM_KEYS; i++) {
@@ -148,9 +143,7 @@ int main(int argc, char * argv[])
     EditProgram backGroundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
     EditProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
 
-    /*
-    *   Init des textures
-    */
+    /* Init des textures */
 
     Texture sky(applicationPath.dirPath() + "/assets/textures/cieltest.jpg");
     Texture ground(applicationPath.dirPath() + "/assets/textures/Ground.jpg");
@@ -162,174 +155,38 @@ int main(int argc, char * argv[])
     GLuint tAlu = alu.getID();
     GLuint tBois = bois.getID();
 
-    /*
-    *   Init des objets
-    */
+    /* Init des objets */
 
     glimac::Sphere sphere = glimac::Sphere(45,100,100);
-
-    // Création du vbo
-    GLuint vbo_Sphere;
-    glGenBuffers(1, &vbo_Sphere);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere);
-    glBufferData(GL_ARRAY_BUFFER, sphere.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) sphere.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_Sphere;
-    glGenVertexArrays(1, &vao_Sphere);
-    glBindVertexArray(vao_Sphere);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLuint vao_Sphere = sphere.getVAO();
 
     glimac::Pad background = glimac::Pad(1,100,100);
-
-    // Création du vbo
-    GLuint vbo_Back;
-    glGenBuffers(1, &vbo_Back);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Back);
-    glBufferData(GL_ARRAY_BUFFER, background.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) background.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_Back;
-    glGenVertexArrays(1, &vao_Back);
-    glBindVertexArray(vao_Back);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Back);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLuint vao_Back = background.getVAO();
 
     // Cylindre
-    glimac::Cylinder cylindre = glimac::Cylinder(0.5, 0.03, 30, 30);
-
-    // Création du vbo
-    GLuint vbo_Cyl;
-    glGenBuffers(1, &vbo_Cyl);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Cyl);
-    glBufferData(GL_ARRAY_BUFFER, cylindre.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindre.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_Cyl;
-    glGenVertexArrays(1, &vao_Cyl);
-    glBindVertexArray(vao_Cyl);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Cyl);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    glimac::Cylinder cylindre = glimac::Cylinder(0.5, 0.03, 30, 30); 
+    GLuint vao_Cyl = cylindre.getVAO();
 
     // Cylindre
     const float objectSize = 0.017;
     glimac::Cylinder cylindreP = glimac::Cylinder(objectSize, 0.03, 30, 30);
-
-    // Création du vbo
-    GLuint vbo_CylP;
-    glGenBuffers(1, &vbo_CylP);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylP);
-    glBufferData(GL_ARRAY_BUFFER, cylindreP.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindreP.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_CylP;
-    glGenVertexArrays(1, &vao_CylP);
-    glBindVertexArray(vao_CylP);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylP);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLuint vao_CylP = cylindreP.getVAO();
 
     // Cylindre
     const float objectSizeG = 0.028;
     glimac::Cylinder cylindrePG = glimac::Cylinder(objectSizeG, 0.03, 30, 30);
-
-    // Création du vbo
-    GLuint vbo_CylPG;
-    glGenBuffers(1, &vbo_CylPG);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylPG);
-    glBufferData(GL_ARRAY_BUFFER, cylindrePG.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindrePG.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_CylPG;
-    glGenVertexArrays(1, &vao_CylPG);
-    glBindVertexArray(vao_CylPG);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylPG);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLuint vao_CylPG = cylindrePG.getVAO();
 
     // Lame de bois
-
     glimac::Pad lame = glimac::Pad(0.02, 0.3, 0.05);
-
-    // Création du vbo
-    GLuint vbo_Lame;
-    glGenBuffers(1, &vbo_Lame);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Lame);
-    glBufferData(GL_ARRAY_BUFFER, lame.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) lame.getDataPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Création du vao
-    GLuint vao_Lame;
-    glGenVertexArrays(1, &vao_Lame);
-    glBindVertexArray(vao_Lame);
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_Lame);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
-    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLuint vao_Lame = lame.getVAO();
 
     glEnable(GL_DEPTH_TEST); // Permet l'activation de profondeur du GPU
 
-    glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.f), (float)window_width/(float)window_height, 0.1f, 100.f);
+    glm::mat4 ProjMatrix = glm::perspective(glm::radians(50.f), (float)window_width/(float)window_height, 0.1f, 100.f);
     glm::mat4 VMatrix;
     glm::mat4 MMatrix;
     glm::mat4 NormalMatrix;
-
-    std::vector<glm::vec3> random;
-    std::vector<int> randomP;
-    for (int i = 0; i<32; i++) {
-        random.push_back(glm::sphericalRand<float>(5.f));
-        for(int j = 0; j<3; j++) {
-            int rand = glm::linearRand(-2,2);
-            while( rand < 1 && rand >-1 ){
-                rand = glm::linearRand(-2,2);
-            }
-            randomP.push_back(rand);
-        }
-    }
 
     /* Launch thread for input keyboard */
     std::thread thread_key(key_loop);
@@ -350,14 +207,10 @@ int main(int argc, char * argv[])
 
         glm::vec4 uDirLight = VMatrix * dirLight;
 
-        /*
-        *   backGround Program
-        */
-
+        /* backGround Program */
         backGroundProgram.m_Program.use();
 
         // Sky
-
         glBindVertexArray(vao_Sphere);
 
         glUniform1i(backGroundProgram.getLocation("uIsDirLight"), 1);
@@ -386,10 +239,8 @@ int main(int argc, char * argv[])
         glBindTexture(GL_TEXTURE_2D, tSky);
 
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-
         
         // Ground
-        
         glBindVertexArray(vao_Back);
 
         glUniform3f(backGroundProgram.getLocation("material.ambient"), 1, 1, 1);
@@ -411,9 +262,7 @@ int main(int argc, char * argv[])
 
         glDrawArrays(GL_TRIANGLES, 0, background.getVertexCount());
 
-        /*
-        *   MainProgram
-        */
+        /* MainProgram */
 
         mainProgram.m_Program.use();
 
@@ -455,7 +304,6 @@ int main(int argc, char * argv[])
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
 
             // Lames de bois
-
             glBindVertexArray(vao_Lame);
 
             glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
@@ -491,7 +339,6 @@ int main(int argc, char * argv[])
         glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
         
         // Début du tournant
-
         glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
         glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
         glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
