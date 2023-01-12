@@ -273,7 +273,8 @@ int main(int argc, char * argv[])
     glBindVertexArray(0);
 
     // Cylindre
-    glimac::Cylinder cylindreP = glimac::Cylinder(0.52, 0.03, 30, 30);
+    const float objectSize = 0.017;
+    glimac::Cylinder cylindreP = glimac::Cylinder(objectSize, 0.03, 30, 30);
 
     // Création du vbo
     GLuint vbo_CylP;
@@ -290,6 +291,31 @@ int main(int argc, char * argv[])
     glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
     glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_CylP);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
+    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
+    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Cylindre
+    const float objectSizeG = 0.028;
+    glimac::Cylinder cylindrePG = glimac::Cylinder(objectSizeG, 0.03, 30, 30);
+
+    // Création du vbo
+    GLuint vbo_CylPG;
+    glGenBuffers(1, &vbo_CylPG);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylPG);
+    glBufferData(GL_ARRAY_BUFFER, cylindrePG.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindrePG.getDataPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao_CylPG;
+    glGenVertexArrays(1, &vao_CylPG);
+    glBindVertexArray(vao_CylPG);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
+    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylPG);
     glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
     glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
     glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
@@ -487,7 +513,18 @@ int main(int argc, char * argv[])
 
                 glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
             }
+
         }
+
+        MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.49, 5.608));
+        MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(0, 1, 0));
+        MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
+        NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+        glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
         
         // Début du tournant
 
@@ -500,18 +537,57 @@ int main(int argc, char * argv[])
 
         glActiveTexture(GL_TEXTURE0);
 
-        for(int i = 0; i < 3;i++){
-            glBindVertexArray(vao_CylP);
-            glBindTexture(GL_TEXTURE_2D, tAlu);
-            float angle = glm::radians(i * (90.0f/2));
-            MMatrix = glm::translate(glm::mat4(1), glm::vec3((i * glm::cos(angle)), 0.5, 4.82 + (i * glm::sin(angle))));
+        
+        const int iterationCount = 45;
+
+        glm::vec3 position;
+        glm::vec3 positionPrec;
+        float anglePrec;
+
+        glBindVertexArray(vao_CylP);
+        glBindTexture(GL_TEXTURE_2D, tAlu);
+        for(int i = 0; i < iterationCount; i++){
+            float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
+            if (i == 0) {
+                position = glm::vec3(0, 0.5, 4.82);
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians((i-1) * (90.0f / (iterationCount - 1)));
+                position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
+                positionPrec = position;
+            }
+
+            MMatrix = glm::translate(glm::mat4(1), position);
             MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
             NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
             glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
             glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
             glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
-            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+            glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
+        }
+
+        glBindVertexArray(vao_CylPG);
+
+        for(int i = 0; i < iterationCount; i++){
+            float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
+            if (i == 0) {
+                position = glm::vec3(-0.3, 0.5, 4.82);
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians((i-1) * (90.0f / (iterationCount - 1)));
+                position = glm::vec3(positionPrec.x + objectSizeG * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSizeG * glm::cos(anglePrec));
+                positionPrec = position;
+            }
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindrePG.getVertexCount());
         }
                 
 
