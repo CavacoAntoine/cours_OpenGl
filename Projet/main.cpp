@@ -25,7 +25,7 @@ int window_height = 720;
 glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
 
 bool stop_key_loop = false;
-const float SPEED_TRANSLATE = 0.05;
+const float SPEED_TRANSLATE = 0.01;
 const int NUM_KEYS = 6;
 const int KEYS[NUM_KEYS] = {GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT};
 bool keyPress[NUM_KEYS] = {false};
@@ -101,8 +101,6 @@ static void size_callback(GLFWwindow* /*window*/, int width, int height)
     window_height = height;
 }
 
-
-
 int main(int argc, char * argv[])
 {
 
@@ -146,8 +144,12 @@ int main(int argc, char * argv[])
     glfwSetWindowSizeCallback(window, &size_callback);
 
     glimac::FilePath applicationPath(argv[0]);
-    EditProgram skyProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
-    EditProgram groundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+    EditProgram backGroundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+    EditProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+
+    /*
+    *   Init des textures
+    */
 
     std::unique_ptr<glimac::Image> sky = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/cieltest.jpg");
     if(sky == NULL){
@@ -161,7 +163,19 @@ int main(int argc, char * argv[])
         return -1;
     }
 
-    GLuint tSky, tGround;
+    std::unique_ptr<glimac::Image> alu = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/rails.png");
+    if(ground == NULL){
+        std::cout <<"Problème chargement image alu";
+        return -1;
+    }
+
+    std::unique_ptr<glimac::Image> bois = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/bois.png");
+    if(ground == NULL){
+        std::cout <<"Problème chargement image bois";
+        return -1;
+    }
+
+    GLuint tSky, tGround, tAlu, tBois;
     glGenTextures(1, &tSky);
     glBindTexture(GL_TEXTURE_2D, tSky);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sky -> getWidth(), sky -> getHeight(), 0, GL_RGBA, GL_FLOAT, sky -> getPixels());
@@ -171,8 +185,22 @@ int main(int argc, char * argv[])
     glBindTexture(GL_TEXTURE_2D, tGround);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ground -> getWidth(), ground -> getHeight(), 0, GL_RGBA, GL_FLOAT, ground -> getPixels());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
+    glGenTextures(1, &tAlu);
+    glBindTexture(GL_TEXTURE_2D, tAlu);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, alu -> getWidth(), alu -> getHeight(), 0, GL_RGBA, GL_FLOAT, alu -> getPixels());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glGenTextures(1, &tBois);
+    glBindTexture(GL_TEXTURE_2D, tBois);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bois -> getWidth(), bois -> getHeight(), 0, GL_RGBA, GL_FLOAT, bois -> getPixels());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(1,0);
+
+    /*
+    *   Init des objets
+    */
 
     glimac::Sphere sphere = glimac::Sphere(45,100,100);
 
@@ -220,6 +248,79 @@ int main(int argc, char * argv[])
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    // Cylindre
+    glimac::Cylinder cylindre = glimac::Cylinder(0.5, 0.03, 30, 30);
+
+    // Création du vbo
+    GLuint vbo_Cyl;
+    glGenBuffers(1, &vbo_Cyl);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_Cyl);
+    glBufferData(GL_ARRAY_BUFFER, cylindre.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindre.getDataPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao_Cyl;
+    glGenVertexArrays(1, &vao_Cyl);
+    glBindVertexArray(vao_Cyl);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
+    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_Cyl);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
+    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
+    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Cylindre
+    glimac::Cylinder cylindreP = glimac::Cylinder(0.52, 0.03, 30, 30);
+
+    // Création du vbo
+    GLuint vbo_CylP;
+    glGenBuffers(1, &vbo_CylP);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylP);
+    glBufferData(GL_ARRAY_BUFFER, cylindreP.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) cylindreP.getDataPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao_CylP;
+    glGenVertexArrays(1, &vao_CylP);
+    glBindVertexArray(vao_CylP);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
+    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_CylP);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
+    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
+    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Lame de bois
+
+    glimac::Pad lame = glimac::Pad(0.02, 0.3, 0.05);
+
+    // Création du vbo
+    GLuint vbo_Lame;
+    glGenBuffers(1, &vbo_Lame);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_Lame);
+    glBufferData(GL_ARRAY_BUFFER, lame.getVertexCount() * sizeof(glimac::ShapeVertex),(glimac::ShapeVertex *) lame.getDataPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Création du vao
+    GLuint vao_Lame;
+    glGenVertexArrays(1, &vao_Lame);
+    glBindVertexArray(vao_Lame);
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_TEXCOORDS);
+    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_Lame);
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, position));
+    glVertexAttribPointer(VERTEX_ATTR_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
+    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex) , (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     glEnable(GL_DEPTH_TEST); // Permet l'activation de profondeur du GPU
 
     glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.f), (float)window_width/(float)window_height, 0.1f, 100.f);
@@ -259,32 +360,37 @@ int main(int argc, char * argv[])
 
         glm::vec4 uDirLight = VMatrix * dirLight;
 
+        /*
+        *   backGround Program
+        */
+
+        backGroundProgram.m_Program.use();
+
+        // Sky
+
         glBindVertexArray(vao_Sphere);
 
-        skyProgram.m_Program.use();
+        glUniform1i(backGroundProgram.getLocation("uIsDirLight"), 1);
 
-        glUniform1i(skyProgram.getLocation("uIsDirLight"), 1);
+        glUniform3f(backGroundProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
+        glUniform3f(backGroundProgram.getLocation("uDirLight.ambient"), 1,1,1);
+        glUniform3f(backGroundProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
+        glUniform3f(backGroundProgram.getLocation("uDirLight.specular"), 0, 0, 0);
 
-        glUniform3f(skyProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
-        glUniform3f(skyProgram.getLocation("uDirLight.ambient"), 1,1,1);
-        glUniform3f(skyProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
-        glUniform3f(skyProgram.getLocation("uDirLight.specular"), 0, 0, 0);
-
-        glUniform3f(skyProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
+        glUniform3f(backGroundProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
         
-        glUniform3f(skyProgram.getLocation("material.ambient"), 1, 1, 1);
-        glUniform3f(skyProgram.getLocation("material.diffuse"), 0, 0, 0);
-        glUniform3f(skyProgram.getLocation("material.specular"), 0, 0, 0);
-        glUniform1f(skyProgram.getLocation("material.shininess"), 10.0);
+        glUniform3f(backGroundProgram.getLocation("material.ambient"), 1, 1, 1);
+        glUniform3f(backGroundProgram.getLocation("material.diffuse"), 0, 0, 0);
+        glUniform3f(backGroundProgram.getLocation("material.specular"), 0, 0, 0);
+        glUniform1f(backGroundProgram.getLocation("material.shininess"), 10.0);
 
-        glUniform1i(skyProgram.getLocation("uTextures[0]"), 0);
+        glUniform1i(backGroundProgram.getLocation("uTextures[0]"), 0);
 
-        // Earth
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0));
         NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
-        glUniformMatrix4fv(skyProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
-        glUniformMatrix4fv(skyProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
-        glUniformMatrix4fv(skyProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tSky);
@@ -292,39 +398,122 @@ int main(int argc, char * argv[])
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
 
         
-        // Notre pavé
+        // Ground
         
         glBindVertexArray(vao_Back);
 
-        groundProgram.m_Program.use();
+        glUniform3f(backGroundProgram.getLocation("material.ambient"), 1, 1, 1);
+        glUniform3f(backGroundProgram.getLocation("material.diffuse"), 0, 0, 0);
+        glUniform3f(backGroundProgram.getLocation("material.specular"), 0, 0, 0);
+        glUniform1f(backGroundProgram.getLocation("material.shininess"), 10.0);
 
-        glUniform1i(groundProgram.getLocation("uIsDirLight"), 1);
-
-        glUniform3f(groundProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
-        glUniform3f(groundProgram.getLocation("uDirLight.ambient"), 1,1,1);
-        glUniform3f(groundProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
-        glUniform3f(groundProgram.getLocation("uDirLight.specular"), 0, 0, 0);
-
-        glUniform3f(groundProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
-        
-        glUniform3f(groundProgram.getLocation("material.ambient"), 1, 1, 1);
-        glUniform3f(groundProgram.getLocation("material.diffuse"), 0, 0, 0);
-        glUniform3f(groundProgram.getLocation("material.specular"), 0, 0, 0);
-        glUniform1f(groundProgram.getLocation("material.shininess"), 10.0);
-
-        glUniform1i(groundProgram.getLocation("uTextures[0]"), 0);
+        glUniform1i(backGroundProgram.getLocation("uTextures[0]"), 0);
 
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(-50, 0, 50));
         MMatrix = glm::rotate(MMatrix, glm::radians(180.f), glm::vec3(1,0,0));
         NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
-        glUniformMatrix4fv(groundProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
-        glUniformMatrix4fv(groundProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
-        glUniformMatrix4fv(groundProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+        glUniformMatrix4fv(backGroundProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tGround);
 
         glDrawArrays(GL_TRIANGLES, 0, background.getVertexCount());
+
+        /*
+        *   MainProgram
+        */
+
+        mainProgram.m_Program.use();
+
+        glUniform1i(mainProgram.getLocation("uIsDirLight"), 1);
+
+        glUniform3f(mainProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
+        glUniform3f(mainProgram.getLocation("uDirLight.ambient"), 1,1,1);
+        glUniform3f(mainProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
+        glUniform3f(mainProgram.getLocation("uDirLight.specular"), 0, 0, 0);
+
+        glUniform3f(mainProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
+
+        glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+        glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+        glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+        glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+        glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+        glActiveTexture(GL_TEXTURE0);
+
+        for(int j = 0; j<10 ; j++) {
+            glBindVertexArray(vao_Cyl);
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+            MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0.5, 0 + j * 0.483));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+
+            MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.5, 0 + j * 0.483));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+
+            // Lames de bois
+
+            glBindVertexArray(vao_Lame);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, tBois);
+
+            for(int i = 0; i<3 ; i++) {
+                MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.49, 0.05 + i*0.16 + j * 0.483));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
+        }
+        
+        // Début du tournant
+
+        glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+        glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+        glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+        glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+        glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+        glActiveTexture(GL_TEXTURE0);
+
+        for(int i = 0; i < 3;i++){
+            glBindVertexArray(vao_CylP);
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+            float angle = glm::radians(i * (90.0f/2));
+            MMatrix = glm::translate(glm::mat4(1), glm::vec3((i * glm::cos(angle)), 0.5, 4.82 + (i * glm::sin(angle))));
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+        }
+                
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
@@ -340,6 +529,8 @@ int main(int argc, char * argv[])
 
     glDeleteTextures(1, &tSky);
     glDeleteTextures(1, &tGround);
+    glDeleteTextures(1, &tAlu);
+    glDeleteTextures(1, &tBois);
     glfwTerminate();
     return 0;
 }
