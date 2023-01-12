@@ -13,6 +13,7 @@
 #include <glimac/TrackballCamera.hpp>
 #include <glimac/FreeflyCamera.hpp>
 #include <glimac/EditProgram.h>
+#include <glimac/Texture.hpp>
 #include <glm/gtc/random.hpp>
 #include <vector>
 #include <iomanip>
@@ -151,52 +152,15 @@ int main(int argc, char * argv[])
     *   Init des textures
     */
 
-    std::unique_ptr<glimac::Image> sky = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/cieltest.jpg");
-    if(sky == NULL){
-        std::cout <<"Problème chargement image sky";
-        return -1;
-    }
+    Texture sky(applicationPath.dirPath() + "/assets/textures/cieltest.jpg");
+    Texture ground(applicationPath.dirPath() + "/assets/textures/Ground.jpg");
+    Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png");
+    Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png");
 
-    std::unique_ptr<glimac::Image> ground = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/Ground.jpg");
-    if(ground == NULL){
-        std::cout <<"Problème chargement image ground";
-        return -1;
-    }
-
-    std::unique_ptr<glimac::Image> alu = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/rails.png");
-    if(ground == NULL){
-        std::cout <<"Problème chargement image alu";
-        return -1;
-    }
-
-    std::unique_ptr<glimac::Image> bois = glimac::loadImage(applicationPath.dirPath() + "/assets/textures/bois.png");
-    if(ground == NULL){
-        std::cout <<"Problème chargement image bois";
-        return -1;
-    }
-
-    GLuint tSky, tGround, tAlu, tBois;
-    glGenTextures(1, &tSky);
-    glBindTexture(GL_TEXTURE_2D, tSky);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sky -> getWidth(), sky -> getHeight(), 0, GL_RGBA, GL_FLOAT, sky -> getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glGenTextures(1, &tGround);
-    glBindTexture(GL_TEXTURE_2D, tGround);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ground -> getWidth(), ground -> getHeight(), 0, GL_RGBA, GL_FLOAT, ground -> getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
-    glGenTextures(1, &tAlu);
-    glBindTexture(GL_TEXTURE_2D, tAlu);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, alu -> getWidth(), alu -> getHeight(), 0, GL_RGBA, GL_FLOAT, alu -> getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glGenTextures(1, &tBois);
-    glBindTexture(GL_TEXTURE_2D, tBois);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bois -> getWidth(), bois -> getHeight(), 0, GL_RGBA, GL_FLOAT, bois -> getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(1,0);
+    GLuint tSky = sky.getID();
+    GLuint tGround = ground.getID();
+    GLuint tAlu = alu.getID();
+    GLuint tBois = bois.getID();
 
     /*
     *   Init des objets
