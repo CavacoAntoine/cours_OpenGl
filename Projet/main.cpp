@@ -181,6 +181,12 @@ int main(int argc, char * argv[])
     glimac::Pad lame = glimac::Pad(0.02, 0.3, 0.05);
     GLuint vao_Lame = lame.getVAO();
 
+    // wagon
+    glimac::Pad wagon = glimac::Pad(0.15, 0.35, 0.3);
+    GLuint vao_wagon = wagon.getVAO();
+    double depWagon = 0;
+    int pouet = 1;
+
     glEnable(GL_DEPTH_TEST); // Permet l'activation de profondeur du GPU
 
     glm::mat4 ProjMatrix = glm::perspective(glm::radians(50.f), (float)window_width/(float)window_height, 0.1f, 100.f);
@@ -328,17 +334,9 @@ int main(int argc, char * argv[])
 
         }
 
-        MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.49, 5.608));
-        MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(0, 1, 0));
-        MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
-        NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
-        glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
-        glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
-        glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+        // wagon
+        glBindVertexArray(vao_wagon);
 
-        glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
-        
-        // Début du tournant
         glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
         glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
         glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
@@ -347,16 +345,49 @@ int main(int argc, char * argv[])
         glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
 
         glActiveTexture(GL_TEXTURE0);
-
+        glBindTexture(GL_TEXTURE_2D, tAlu);
         
+        glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+        glm::vec3 initPosWagon = glm::vec3(-0.325, 0.53, 0);
+        
+
+        MMatrix = glm::translate(glm::mat4(1), glm::vec3(initPosWagon.x , initPosWagon.y, initPosWagon.z + depWagon));
+        NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+        glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+        glDrawArrays(GL_TRIANGLES, 0, wagon.getVertexCount());
+
+        depWagon += 0.01 * pouet;
+
+        if(depWagon >= 4.8) {
+            pouet = -1;   
+        } if(depWagon <= 0) {
+            pouet = 1;
+        }
+        
+
+        glActiveTexture(GL_TEXTURE0);
         const int iterationCount = 45;
 
         glm::vec3 position;
         glm::vec3 positionPrec;
+        glm::vec3 lastPos;
+        
         float anglePrec;
+
+        // Début du tournant
+        glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+        glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+        glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+        glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
 
         glBindVertexArray(vao_CylP);
         glBindTexture(GL_TEXTURE_2D, tAlu);
+        
+
         for(int i = 0; i < iterationCount; i++){
             float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
             if (i == 0) {
@@ -366,7 +397,30 @@ int main(int argc, char * argv[])
                 anglePrec = glm::radians((i-1) * (90.0f / (iterationCount - 1)));
                 position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
                 positionPrec = position;
-            }
+            }            
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            lastPos = position;
+            glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
+
+        }
+
+        for(int i = 0; i < iterationCount; i++){
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+90.0f);
+            if (i == 0) {
+                position = lastPos;
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+90.0f);
+                position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
+                positionPrec = position;
+            }            
 
             MMatrix = glm::translate(glm::mat4(1), position);
             MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
@@ -376,11 +430,20 @@ int main(int argc, char * argv[])
             glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
             glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
+
         }
 
-        glBindVertexArray(vao_CylPG);
-
+        
         for(int i = 0; i < iterationCount; i++){
+            glBindVertexArray(vao_CylPG);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+
             float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
             if (i == 0) {
                 position = glm::vec3(-0.3, 0.5, 4.82);
@@ -398,8 +461,294 @@ int main(int argc, char * argv[])
             glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
             glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
+            lastPos = position;
             glDrawArrays(GL_TRIANGLES, 0, cylindrePG.getVertexCount());
+
+            if(i%9 == 3 && i!= 0) {
+                glBindVertexArray(vao_Lame);
+
+                glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+                glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+                glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+                glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+                glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tBois);
+
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
+                //MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
         }
+
+        for(int i = 0; i < iterationCount; i++){
+            glBindVertexArray(vao_CylPG);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+90.0f);
+            if (i == 0) {
+                position = lastPos;
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+90.0f);
+                position = glm::vec3(positionPrec.x + objectSizeG * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSizeG * glm::cos(anglePrec));
+                positionPrec = position;
+            }
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            lastPos = position;
+            glDrawArrays(GL_TRIANGLES, 0, cylindrePG.getVertexCount());
+
+            if(i%9 == 3 && i!= 0) {
+                glBindVertexArray(vao_Lame);
+
+                glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+                glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+                glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+                glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+                glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tBois);
+
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
+                //MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
+        }
+
+        for(int j = 0; j<10 ; j++) {
+            glBindVertexArray(vao_Cyl);
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+            MMatrix = glm::translate(glm::mat4(1), glm::vec3(lastPos.x, 0.5, 0 + j * 0.483));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+
+            MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3+lastPos.x, 0.5, 0 + j * 0.483));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+
+            // Lames de bois
+            glBindVertexArray(vao_Lame);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, tBois);
+
+            for(int i = 0; i<3 ; i++) {
+                MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3+lastPos.x, 0.49, 0.05 + i*0.16 + j * 0.483));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
+
+        }
+
+        glBindVertexArray(vao_CylP);
+        glBindTexture(GL_TEXTURE_2D, tAlu);
+
+        for(int i = 0; i < iterationCount; i++){
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+180.0f);
+            if (i == 0) {
+                position = glm::vec3(-0.3+lastPos.x, 0.5, 0);
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+180.0f);
+                position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
+                positionPrec = position;
+            }            
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            lastPos = position;
+            glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
+
+        }
+
+        for(int i = 0; i < iterationCount; i++){
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+270.0f);
+            if (i == 0) {
+                position = lastPos;
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+270.0f);
+                position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
+                positionPrec = position;
+            }            
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
+
+        }
+
+        for(int i = 0; i < iterationCount; i++){
+            glBindVertexArray(vao_CylPG);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+180.0f);
+            if (i == 0) {
+                position = glm::vec3(-0.3*lastPos.x, 0.5, 0);
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+180.0f);
+                position = glm::vec3(positionPrec.x + objectSizeG * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSizeG * glm::cos(anglePrec));
+                positionPrec = position;
+            }
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            lastPos = position;
+            glDrawArrays(GL_TRIANGLES, 0, cylindrePG.getVertexCount());
+
+            if(i%9 == 3 && i!= 0) {
+                glBindVertexArray(vao_Lame);
+
+                glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+                glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+                glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+                glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+                glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tBois);
+
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
+                //MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
+        }
+
+        for(int i = 0; i < iterationCount; i++){
+            glBindVertexArray(vao_CylPG);
+
+            glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+            glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+            glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+            glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+            glBindTexture(GL_TEXTURE_2D, tAlu);
+
+            float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+270.0f);
+            if (i == 0) {
+                position = lastPos;
+                positionPrec = position;
+            } else {
+                anglePrec = glm::radians(((i-1) * (90.0f / (iterationCount - 1)))+270.0f);
+                position = glm::vec3(positionPrec.x + objectSizeG * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSizeG * glm::cos(anglePrec));
+                positionPrec = position;
+            }
+
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+            NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+            glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            lastPos = position;
+            glDrawArrays(GL_TRIANGLES, 0, cylindrePG.getVertexCount());
+
+            if(i%9 == 3 && i!= 0) {
+                glBindVertexArray(vao_Lame);
+
+                glUniform3f(mainProgram.getLocation("material.ambient"), 1, 1, 1);
+                glUniform3f(mainProgram.getLocation("material.diffuse"), 0, 0, 0);
+                glUniform3f(mainProgram.getLocation("material.specular"), 0, 0, 0);
+                glUniform1f(mainProgram.getLocation("material.shininess"), 10.0);
+
+                glUniform1i(mainProgram.getLocation("uTextures[0]"), 0);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tBois);
+
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
+                //MMatrix = glm::translate(MMatrix, glm::vec3(0, 0, 0.7));
+                NormalMatrix = glm::transpose(glm::inverse(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVPMatrix"), 1, GL_FALSE, glm::value_ptr(ProjMatrix * VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uMVMatrix"), 1, GL_FALSE, glm::value_ptr(VMatrix * MMatrix));
+                glUniformMatrix4fv(mainProgram.getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+                glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
+            }
+        }
+
+        
                 
 
         glBindTexture(GL_TEXTURE_2D, 0);
