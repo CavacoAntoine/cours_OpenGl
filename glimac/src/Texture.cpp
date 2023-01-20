@@ -1,11 +1,6 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include "glimac/common.hpp"
 #include "glimac/Texture.hpp"
-#include "glimac/Image.hpp"
-#include <iomanip>
 
-Texture::Texture(const std::string& filepath) {
+Texture::Texture(const std::string& filepath, Material mat) : material(mat) {
     std::unique_ptr<glimac::Image> image = glimac::loadImage(filepath);
     if (!image) {
         std::cout << "Failed to load image: " << filepath << std::endl;
@@ -22,4 +17,8 @@ Texture::Texture(const std::string& filepath) {
 
 GLuint Texture::getID() const {
     return m_id;
+}
+
+Material Texture::getMaterial() const {
+    return this->material;
 }

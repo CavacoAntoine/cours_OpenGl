@@ -1,7 +1,10 @@
+#pragma once
+
 #include <glad/glad.h>
 #include "common.hpp"
 #include "Program.hpp"
 #include "FilePath.hpp"
+#include "Texture.hpp"
 #include <map>
 
 #define MAX_LIGHTS 10
@@ -11,6 +14,9 @@ class EditProgram {
 
     private:
         std::map<std::string, GLuint> uLocation; 
+
+    protected:
+        void setMaterial(Material material);
 
     public:
         glimac::Program m_Program;
@@ -28,7 +34,7 @@ class EditProgram {
         }
 
         void adduLocation(std::string name);
-        GLuint getLocation(std::string);
+        GLuint getLocation(std::string name);
 };
 
 class EarthProgram : public EditProgram {
@@ -53,8 +59,11 @@ class MoonProgram : public EditProgram {
 };
 
 class LightsTextsProgram : public EditProgram {
+    private:
+        int nbrTextures;
+
     public:
-        LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS, bool isDirLight, int nbrTextures, int nbrPointLights, int nbrSpotLights) : EditProgram(applicationPath, fpVS, fpFS) {
+        LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS, bool isDirLight, int nbrTextures, int nbrPointLights, int nbrSpotLights) : EditProgram(applicationPath, fpVS, fpFS), nbrTextures(nbrTextures) {
             this->m_Program.use();
 
             // Location of texture values
@@ -109,4 +118,6 @@ class LightsTextsProgram : public EditProgram {
             }
             
         }
+
+        void setMaterial(Material material);
 };
