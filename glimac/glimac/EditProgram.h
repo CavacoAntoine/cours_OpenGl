@@ -15,9 +15,6 @@ class EditProgram {
     private:
         std::map<std::string, GLuint> uLocation; 
 
-    protected:
-        void setMaterial(Material material);
-
     public:
         glimac::Program m_Program;
 
@@ -35,6 +32,7 @@ class EditProgram {
 
         void adduLocation(std::string name);
         GLuint getLocation(std::string name);
+        void setMaterial(Material material);
 };
 
 class EarthProgram : public EditProgram {

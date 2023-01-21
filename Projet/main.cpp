@@ -25,6 +25,8 @@ int window_height = 720;
 
 glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
 
+const int iterationCount = 45;
+
 bool stop_key_loop = false;
 const float SPEED_TRANSLATE = 0.01;
 const int NUM_KEYS = 6;
@@ -104,6 +106,94 @@ void initMatrixs(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, 
     glUniformMatrix4fv(program->getLocation("uNormalMatrix"), 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 }
 
+void setMaterial1t(EditProgram *program, Material material, GLuint textureID) {
+    program->setMaterial(material);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+}
+
+void setMaterial2t(EditProgram *program, Material material, GLuint textureID1,GLuint textureID2) {
+    program->setMaterial(material);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textureID2);
+}
+/*
+glm::vec3 virageExterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, double objectSize, 
+                            GLuint vaoCyl, Material materialCyl, GLuint textureCylId, GLsizei vertexCountCyl,
+                            GLuint vaoLame, Material materialLame, GLuint textureLameId, GLsizei vertexCountLame) {
+    startPos = glm::vec3(-0.3, 0.5, 4.82);
+    glm::vec3 position;
+    glm::vec3 previousPos;
+    glm::vec3 lastPos;
+    glm::mat4 MMatrix;
+    float previousAngle;
+    float angle;
+
+    for(int i = 0; i < iterationCount; i++){
+        glBindVertexArray(vaoCyl);
+        setMaterial1t(program, materialCyl, textureCylId);
+        angle = glm::radians(i * (90.0f / (iterationCount - 1)));
+        if (i == 0) {
+            position = startPos;
+            
+        } else {
+            position = glm::vec3(previousPos.x + objectSize * glm::sin(previousAngle), previousPos.y, previousPos.z + objectSize * glm::cos(previousAngle));
+        }
+
+        previousAngle = angle;
+        previousPos = position;
+
+        MMatrix = glm::translate(glm::mat4(1), position);
+        MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+        initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCountCyl);
+        
+        if(i%9 == 3 && i!= 0) {
+            glBindVertexArray(vaoLame);
+            setMaterial1t(program, materialLame, textureLameId);
+            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
+            initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
+            glDrawArrays(GL_TRIANGLES, 0, vertexCountLame);
+        }
+    }
+
+    return position;
+}
+
+*/
+
+glm::vec3 virageInterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, double objectSize, 
+                            GLuint vao, Material material, GLuint textureId, GLsizei vertexCount) {
+    glm::vec3 position;
+    glm::vec3 previousPos;
+    glm::mat4 MMatrix;
+    float previousAngle;
+    float angle;
+
+    glBindVertexArray(vao);
+    setMaterial1t(program, material, textureId);
+    for(int i = 0; i < iterationCount; i++){
+        angle = glm::radians(i * (90.0f / (iterationCount - 1)));
+        if (i == 0) {
+            position = startPos;
+        } else {
+            position = glm::vec3(previousPos.x + objectSize * glm::sin(previousAngle), previousPos.y, previousPos.z + objectSize * glm::cos(previousAngle));
+        }
+        previousPos = position;
+        previousAngle = angle;
+
+        MMatrix = glm::translate(glm::mat4(1), position);
+        MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
+        initMatrixs(program, ProjMatrix, VMatrix, MMatrix);        
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    }
+
+    return position;
+}
+
 int main(int argc, char * argv[])
 {
 
@@ -147,8 +237,8 @@ int main(int argc, char * argv[])
     glfwSetWindowSizeCallback(window, &size_callback);
 
     glimac::FilePath applicationPath(argv[0]);
-    LightsTextsProgram backGroundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
-    LightsTextsProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+    EditProgram backGroundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+    EditProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
 
     /* Init des textures */
 
@@ -221,22 +311,16 @@ int main(int argc, char * argv[])
 
         /* backGround Program */
         backGroundProgram.m_Program.use();
-
-        // Sky
-        glBindVertexArray(vao_Sphere);
-
         glUniform1i(backGroundProgram.getLocation("uIsDirLight"), 1);
-
         glUniform3f(backGroundProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
         glUniform3f(backGroundProgram.getLocation("uDirLight.ambient"), 1,1,1);
         glUniform3f(backGroundProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
         glUniform3f(backGroundProgram.getLocation("uDirLight.specular"), 0, 0, 0);
-
         glUniform3f(backGroundProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
         
-        backGroundProgram.setMaterial(sky.getMaterial());
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tSky);
+        // Sky
+        glBindVertexArray(vao_Sphere);
+        setMaterial1t(&backGroundProgram, sky.getMaterial(), tSky);
 
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0));
         initMatrixs(&backGroundProgram, ProjMatrix, VMatrix, MMatrix);
@@ -245,12 +329,7 @@ int main(int argc, char * argv[])
         
         // Ground
         glBindVertexArray(vao_Back);
-
-        backGroundProgram.setMaterial(ground.getMaterial());
-        glUniform1i(backGroundProgram.getLocation("uTextures[0]"), 0);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tGround);
+        setMaterial1t(&backGroundProgram, ground.getMaterial(), tGround);
 
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(-50, 0, 50));
         MMatrix = glm::rotate(MMatrix, glm::radians(180.f), glm::vec3(1,0,0));
@@ -261,50 +340,42 @@ int main(int argc, char * argv[])
         /* MainProgram */
 
         mainProgram.m_Program.use();
-        glActiveTexture(GL_TEXTURE0);
-
         glUniform1i(mainProgram.getLocation("uIsDirLight"), 1);
-
         glUniform3f(mainProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
         glUniform3f(mainProgram.getLocation("uDirLight.ambient"), 1,1,1);
         glUniform3f(mainProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
         glUniform3f(mainProgram.getLocation("uDirLight.specular"), 0, 0, 0);
-
         glUniform3f(mainProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
 
-        
+        // 1er rail droit
 
         for(int j = 0; j<10 ; j++) {
             glBindVertexArray(vao_Cyl);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
 
+            // Rail gauche
             MMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0.5, 0 + j * 0.483));
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
 
+            // Rail droit
             MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.5, 0 + j * 0.483));
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
 
             // Lames de bois
             glBindVertexArray(vao_Lame);
-            mainProgram.setMaterial(bois.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tBois);
-
+            setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
             for(int i = 0; i<3 ; i++) {
                 MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.49, 0.05 + i*0.16 + j * 0.483));
                 initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
                 glDrawArrays(GL_TRIANGLES, 0, lame.getVertexCount());
             }
-
         }
 
-        // wagon
+        // Wagon
         glBindVertexArray(vao_wagon);
-        mainProgram.setMaterial(alu.getMaterial());
-        glBindTexture(GL_TEXTURE_2D, tAlu);
-
+        setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
         glm::vec3 initPosWagon = glm::vec3(-0.325, 0.53, 0);
         
         MMatrix = glm::translate(glm::mat4(1), glm::vec3(initPosWagon.x , initPosWagon.y, initPosWagon.z + depWagon));
@@ -312,44 +383,20 @@ int main(int argc, char * argv[])
         glDrawArrays(GL_TRIANGLES, 0, wagon.getVertexCount());
 
         depWagon += 0.01 * pouet;
-
         if(depWagon >= 4.8) {
             pouet = -1;   
         } if(depWagon <= 0) {
             pouet = 1;
         }
         
+        // Virages
         const int iterationCount = 45;
-
         glm::vec3 position;
         glm::vec3 positionPrec;
         glm::vec3 lastPos;
-        
         float anglePrec;
 
-        // Début du tournant
-        glBindVertexArray(vao_CylP);
-        mainProgram.setMaterial(alu.getMaterial());
-        glBindTexture(GL_TEXTURE_2D, tAlu);
-
-        for(int i = 0; i < iterationCount; i++){
-            float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
-            if (i == 0) {
-                position = glm::vec3(0, 0.5, 4.82);
-                positionPrec = position;
-            } else {
-                anglePrec = glm::radians((i-1) * (90.0f / (iterationCount - 1)));
-                position = glm::vec3(positionPrec.x + objectSize * glm::sin(anglePrec), positionPrec.y, positionPrec.z + objectSize * glm::cos(anglePrec));
-                positionPrec = position;
-            }            
-
-            MMatrix = glm::translate(glm::mat4(1), position);
-            MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
-            initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
-            lastPos = position;
-            glDrawArrays(GL_TRIANGLES, 0, cylindreP.getVertexCount());
-
-        }
+        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(0, 0.5, 4.82), objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount());
 
         for(int i = 0; i < iterationCount; i++){
             float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+90.0f);
@@ -369,11 +416,9 @@ int main(int argc, char * argv[])
 
         }
 
-        
         for(int i = 0; i < iterationCount; i++){
             glBindVertexArray(vao_CylPG);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
 
             float angle = glm::radians(i * (90.0f / (iterationCount - 1)));
             if (i == 0) {
@@ -393,8 +438,7 @@ int main(int argc, char * argv[])
 
             if(i%9 == 3 && i!= 0) {
                 glBindVertexArray(vao_Lame);
-                mainProgram.setMaterial(bois.getMaterial());
-                glBindTexture(GL_TEXTURE_2D, tBois);
+                setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
 
                 MMatrix = glm::translate(glm::mat4(1), position);
                 MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
@@ -405,8 +449,7 @@ int main(int argc, char * argv[])
 
         for(int i = 0; i < iterationCount; i++){
             glBindVertexArray(vao_CylPG);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
 
             float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+90.0f);
             if (i == 0) {
@@ -426,8 +469,7 @@ int main(int argc, char * argv[])
 
             if(i%9 == 3 && i!= 0) {
                 glBindVertexArray(vao_Lame);
-                mainProgram.setMaterial(bois.getMaterial());
-                glBindTexture(GL_TEXTURE_2D, tBois);
+                setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
 
                 MMatrix = glm::translate(glm::mat4(1), position);
                 MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
@@ -436,10 +478,10 @@ int main(int argc, char * argv[])
             }
         }
 
+        // 2eme rail droit
         for(int j = 0; j<10 ; j++) {
             glBindVertexArray(vao_Cyl);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
             
             MMatrix = glm::translate(glm::mat4(1), glm::vec3(lastPos.x, 0.5, 0 + j * 0.483));
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
@@ -451,8 +493,7 @@ int main(int argc, char * argv[])
 
             // Lames de bois
             glBindVertexArray(vao_Lame);
-            mainProgram.setMaterial(bois.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tBois);
+            setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
 
             for(int i = 0; i<3 ; i++) {
                 MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3+lastPos.x, 0.49, 0.05 + i*0.16 + j * 0.483));
@@ -462,10 +503,9 @@ int main(int argc, char * argv[])
 
         }
 
+        // Virage
         glBindVertexArray(vao_CylP);
-        mainProgram.setMaterial(alu.getMaterial());
-        glBindTexture(GL_TEXTURE_2D, tAlu);
-
+        setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
         for(int i = 0; i < iterationCount; i++){
             float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+180.0f);
             if (i == 0) {
@@ -505,8 +545,7 @@ int main(int argc, char * argv[])
 
         for(int i = 0; i < iterationCount; i++){
             glBindVertexArray(vao_CylPG);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
 
             float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+180.0f);
             if (i == 0) {
@@ -526,8 +565,7 @@ int main(int argc, char * argv[])
 
             if(i%9 == 3 && i!= 0) {
                 glBindVertexArray(vao_Lame);
-                mainProgram.setMaterial(bois.getMaterial());
-                glBindTexture(GL_TEXTURE_2D, tBois);
+                setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
 
                 MMatrix = glm::translate(glm::mat4(1), position);
                 MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
@@ -538,8 +576,7 @@ int main(int argc, char * argv[])
 
         for(int i = 0; i < iterationCount; i++){
             glBindVertexArray(vao_CylPG);
-            mainProgram.setMaterial(alu.getMaterial());
-            glBindTexture(GL_TEXTURE_2D, tAlu);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
 
             float angle = glm::radians((i * (90.0f / (iterationCount - 1)))+270.0f);
             if (i == 0) {
@@ -559,8 +596,7 @@ int main(int argc, char * argv[])
 
             if(i%9 == 3 && i!= 0) {
                 glBindVertexArray(vao_Lame);
-                mainProgram.setMaterial(bois.getMaterial());
-                glBindTexture(GL_TEXTURE_2D, tBois);
+                setMaterial1t(&mainProgram, bois.getMaterial(), tBois);
 
                 MMatrix = glm::translate(glm::mat4(1), position);
                 MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
