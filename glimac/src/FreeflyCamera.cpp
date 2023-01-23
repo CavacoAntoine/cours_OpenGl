@@ -42,8 +42,8 @@ namespace glimac {
     }
 
     void FreeflyCamera::notUnderZero() {
-        if(this->m_Position.y <0.5) {
-            this->m_Position.y = 0.5;
+        if(this->m_Position.y < 0.01) {
+            this->m_Position.y = 0.02;
         }
     }
 

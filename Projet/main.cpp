@@ -120,9 +120,10 @@ void setMaterial2t(EditProgram *program, Material material, GLuint textureID1,GL
     glBindTexture(GL_TEXTURE_2D, textureID2);
 }
 
-glm::vec3 virageExterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, float angleIdx, double objectSize, 
+glm::vec3 virageExterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, float startAngle,float angleTot, double objectSize, 
                             GLuint vaoCyl, Material materialCyl, GLuint textureCylId, GLsizei vertexCountCyl,
-                            GLuint vaoLame, Material materialLame, GLuint textureLameId, GLsizei vertexCountLame) {
+                            GLuint vaoLame, Material materialLame, GLuint textureLameId, GLsizei vertexCountLame,
+                            GLuint vaoPoteau, Material materialPoteau, GLuint textureIdPoteau) {
     glm::vec3 position;
     glm::vec3 previousPos;
     glm::mat4 MMatrix;
@@ -132,7 +133,7 @@ glm::vec3 virageExterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 
     for(int i = 0; i < iterationCount; i++){
         glBindVertexArray(vaoCyl);
         setMaterial1t(program, materialCyl, textureCylId);
-        angle = glm::radians(i * (90.0f / (iterationCount - 1)) + angleIdx);
+        angle = glm::radians(i * (angleTot / (iterationCount - 1)) + startAngle);
         if (i == 0) {
             position = startPos;
             
@@ -148,31 +149,42 @@ glm::vec3 virageExterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 
         initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
         glDrawArrays(GL_TRIANGLES, 0, vertexCountCyl);
         
-        if(i%9 == 3 && i!= 0) {
+        if(i%5 == 3 && i!= 0) {
             glBindVertexArray(vaoLame);
             setMaterial1t(program, materialLame, textureLameId);
-            MMatrix = glm::translate(glm::mat4(1), position);
+            MMatrix = glm::translate(glm::mat4(1), position + glm::vec3(0,-0.01, 0));
             MMatrix = glm::rotate(MMatrix, angle , glm::vec3(0, 1, 0));
             initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, vertexCountLame);
+
+            if(i%2 == 0){
+                glBindVertexArray(vaoPoteau);
+                setMaterial1t(program, materialPoteau, textureIdPoteau);
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, vertexCountCyl);
+            } 
         }
     }
 
     return position;
 }
 
-glm::vec3 virageInterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, float angleIdx, double objectSize, 
-                            GLuint vao, Material material, GLuint textureId, GLsizei vertexCount) {
+glm::vec3 virageInterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 VMatrix, glm::vec3 startPos, float startAngle,float angleTot, double objectSize, 
+                            GLuint vao, Material material, GLuint textureId, GLsizei vertexCount, GLuint vaoPoteau, Material materialPoteau, GLuint textureIdPoteau) {
     glm::vec3 position;
     glm::vec3 previousPos;
     glm::mat4 MMatrix;
     float previousAngle;
     float angle;
 
-    glBindVertexArray(vao);
-    setMaterial1t(program, material, textureId);
+    
+    
     for(int i = 0; i < iterationCount; i++){
-        angle = glm::radians(i * (90.0f / (iterationCount - 1)) + angleIdx);
+        glBindVertexArray(vao);
+        setMaterial1t(program, material, textureId);
+        angle = glm::radians(i * (angleTot / (iterationCount - 1)) + startAngle);
         if (i == 0) {
             position = startPos;
         } else {
@@ -185,6 +197,15 @@ glm::vec3 virageInterieur(EditProgram *program, glm::mat4 ProjMatrix, glm::mat4 
         MMatrix = glm::rotate(MMatrix, angle, glm::vec3(0,1,0));
         initMatrixs(program, ProjMatrix, VMatrix, MMatrix);        
         glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+
+        if(i%15 == 0 && i!=0 ){
+                glBindVertexArray(vaoPoteau);
+                setMaterial1t(program, materialPoteau, textureIdPoteau);
+                MMatrix = glm::translate(glm::mat4(1), position);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(program, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+            } 
     }
 
     return position;
@@ -239,14 +260,20 @@ int main(int argc, char * argv[])
     /* Init des textures */
 
     Texture sky(applicationPath.dirPath() + "/assets/textures/cieltest.jpg", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture ground(applicationPath.dirPath() + "/assets/textures/Ground.jpg", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture ground(applicationPath.dirPath() + "/assets/textures/testSol.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
     Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
     Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture testPad(applicationPath.dirPath() + "/assets/textures/testPad.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture iron(applicationPath.dirPath() + "/assets/textures/poteau.png",Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture solWagon(applicationPath.dirPath() + "/assets/textures/solWagon.png",Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
 
     GLuint tSky = sky.getID();
     GLuint tGround = ground.getID();
     GLuint tAlu = alu.getID();
     GLuint tBois = bois.getID();
+    GLuint tTest = testPad.getID();
+    GLuint tIron = iron.getID();
+    GLuint tSolWagon = solWagon.getID();
 
     /* Init des objets */
 
@@ -261,24 +288,33 @@ int main(int argc, char * argv[])
     GLuint vao_Cyl = cylindre.getVAO();
 
     // Cylindre
-    const float objectSize = 0.017;
-    glimac::Cylinder cylindreP = glimac::Cylinder(objectSize, 0.03, 30, 30);
+    const float objectSize = 0.03452;
+    glimac::Cylinder cylindreP = glimac::Cylinder(objectSize+0.01, 0.03, 30, 30);
     GLuint vao_CylP = cylindreP.getVAO();
 
     // Cylindre
-    const float objectSizeG = 0.028;
-    glimac::Cylinder cylindrePG = glimac::Cylinder(objectSizeG, 0.03, 30, 30);
+    const float objectSizeG = 0.056;
+    glimac::Cylinder cylindrePG = glimac::Cylinder(objectSizeG+0.01, 0.03, 30, 30);
     GLuint vao_CylPG = cylindrePG.getVAO();
+
+    // Poteau
+    glimac::Cylinder poteau = glimac::Cylinder(0.5, 0.03, 30, 30);
+    GLuint vao_Poteau = poteau.getVAO();
 
     // Lame de bois
     glimac::Pad lame = glimac::Pad(0.02, 0.3, 0.05);
     GLuint vao_Lame = lame.getVAO();
 
     // wagon
-    glimac::Pad wagon = glimac::Pad(0.15, 0.35, 0.3);
-    GLuint vao_wagon = wagon.getVAO();
+    glimac::Pad wagB = glimac::Pad(0.01, 0.35, 0.3);
+    GLuint vao_wagB = wagB.getVAO();
     double wagonTranslation = 0;
     int direction = 1;
+
+    glimac::Pad wagC = glimac::Pad(0.14, 0.01, 0.28);
+    GLuint vao_wagC = wagC.getVAO();
+    glimac::Pad wagD = glimac::Pad(0.14, 0.35, 0.01);
+    GLuint vao_wagD = wagD.getVAO();
 
     glEnable(GL_DEPTH_TEST); // Permet l'activation de profondeur du GPU
 
@@ -354,10 +390,28 @@ int main(int argc, char * argv[])
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
 
+            if(j == 2 || j == 5 || j == 8){
+                glBindVertexArray(vao_Poteau);
+                setMaterial1t(&mainProgram, iron.getMaterial(), tIron);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, poteau.getVertexCount());
+            }
+
             // Rail droit
+            glBindVertexArray(vao_Cyl);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
             MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3, 0.5, 0 + j * 0.483));
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+
+            if(j == 2 || j == 5 || j == 8){
+                glBindVertexArray(vao_Poteau);
+                setMaterial1t(&mainProgram, iron.getMaterial(), tIron);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, poteau.getVertexCount());
+            }
 
             // Lames de bois
             glBindVertexArray(vao_Lame);
@@ -369,14 +423,43 @@ int main(int argc, char * argv[])
             }
         }
 
-        // Wagon
-        glBindVertexArray(vao_wagon);
-        setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
+        /* Wagon */
+        // wagB
+        glBindVertexArray(vao_wagB);
+        setMaterial1t(&mainProgram, solWagon.getMaterial(), tSolWagon);
         glm::vec3 initPosWagon = glm::vec3(-0.325, 0.53, 0);
         
-        MMatrix = glm::translate(glm::mat4(1), glm::vec3(initPosWagon.x , initPosWagon.y, initPosWagon.z + wagonTranslation));
+        MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0, wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
-        glDrawArrays(GL_TRIANGLES, 0, wagon.getVertexCount());
+        glDrawArrays(GL_TRIANGLES, 0, wagB.getVertexCount());
+        
+        // wagCG
+        glBindVertexArray(vao_wagC);
+        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0.34, 0.01, 0.01 + wagonTranslation));
+        initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, wagC.getVertexCount());
+
+        // wagCD
+        glBindVertexArray(vao_wagC);
+        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, 0.01 + wagonTranslation));
+        initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, wagC.getVertexCount());
+
+        // wagDer
+        glBindVertexArray(vao_wagD);
+        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, wagonTranslation));
+        initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, wagD.getVertexCount());
+
+        // wagDevant
+        glBindVertexArray(vao_wagD);
+        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, 0.29 + wagonTranslation));
+        initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, wagD.getVertexCount());
 
         wagonTranslation += 0.01 * direction;
         if(wagonTranslation >= 4.8) {
@@ -384,16 +467,14 @@ int main(int argc, char * argv[])
         } if(wagonTranslation <= 0) {
             direction = 1;
         }
-        
+
         // 1er Virage
         glm::vec3 lastPos;
-        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(0, 0.5, 4.82), 0.0f, objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount());
-        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, lastPos, 90.0f,objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount());
+        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(0, 0.5, 4.82), 0.0f,180.0f, objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount(), vao_Poteau, iron.getMaterial(), tIron);
+        
 
-        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(-0.3, 0.5, 4.82), 0.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
-                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount());
-        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, lastPos, 90.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
-                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount());
+        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(-0.3, 0.5, 4.82), 0.0f,180.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
+                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount(),vao_Poteau, iron.getMaterial(), tIron);
 
         // 2eme rail droit
         for(int j = 0; j<10 ; j++) {
@@ -404,9 +485,27 @@ int main(int argc, char * argv[])
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
 
+            if(j == 2 || j == 5 || j == 8){
+                glBindVertexArray(vao_Poteau);
+                setMaterial1t(&mainProgram, iron.getMaterial(), tIron);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, poteau.getVertexCount());
+            }
+
+            glBindVertexArray(vao_Cyl);
+            setMaterial1t(&mainProgram, alu.getMaterial(), tAlu);
             MMatrix = glm::translate(glm::mat4(1), glm::vec3(-0.3+lastPos.x, 0.5, 0 + j * 0.483));
             initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
             glDrawArrays(GL_TRIANGLES, 0, cylindre.getVertexCount());
+            
+            if(j == 2 || j == 5 || j == 8){
+                glBindVertexArray(vao_Poteau);
+                setMaterial1t(&mainProgram, iron.getMaterial(), tIron);
+                MMatrix = glm::rotate(MMatrix, glm::radians(90.0f) , glm::vec3(1, 0, 0));
+                initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+                glDrawArrays(GL_TRIANGLES, 0, poteau.getVertexCount());
+            }
 
             // Lames de bois
             glBindVertexArray(vao_Lame);
@@ -420,13 +519,11 @@ int main(int argc, char * argv[])
         }
 
         // 2eme Virage
-        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(-0.3+lastPos.x, 0.5, 0), 180.0f, objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount());
-        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, lastPos, 270.0f,objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount());
+        glm::vec3 endPos = lastPos;
+        lastPos = virageInterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(-0.3+endPos.x, 0.5, 0), 180.0f,180.0f, objectSize, vao_CylP, alu.getMaterial(), tAlu, cylindreP.getVertexCount(),vao_Poteau, iron.getMaterial(), tIron);
 
-        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(-0.3*lastPos.x, 0.5, 0), 180.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
-                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount());
-        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, lastPos, 270.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
-                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount());
+        lastPos = virageExterieur(&mainProgram, ProjMatrix, VMatrix, glm::vec3(0+endPos.x, 0.5, 0), 180.0f,180.0f, objectSizeG, vao_CylPG, alu.getMaterial(), tAlu, cylindrePG.getVertexCount(),
+                                    vao_Lame, bois.getMaterial(), tBois, lame.getVertexCount(), vao_Poteau, iron.getMaterial(), tIron);
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
