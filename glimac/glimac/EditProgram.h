@@ -64,6 +64,12 @@ class LightsTextsProgram : public EditProgram {
         LightsTextsProgram(const glimac::FilePath& applicationPath, std::string fpVS, std::string fpFS, bool isDirLight, int nbrTextures, int nbrPointLights, int nbrSpotLights) : EditProgram(applicationPath, fpVS, fpFS), nbrTextures(nbrTextures) {
             this->m_Program.use();
 
+            if(isDirLight) {
+                glUniform1i(this->getLocation("uIsDirLight"), 1);
+            } else {
+                glUniform1i(this->getLocation("uIsDirLight"), 0);
+            }
+
             // Location of texture values
             for(int i = 0; i < nbrTextures; i++) {
                 this->adduLocation(std::string("uTextures[" + std::to_string(i) + "]"));

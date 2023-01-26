@@ -15,6 +15,7 @@
 #include <glimac/EditProgram.h>
 #include <glimac/Texture.hpp>
 #include <glm/gtc/random.hpp>
+#include <glimac/Lights.hpp>
 #include <vector>
 #include <iomanip>
 #include <functional>
@@ -23,8 +24,19 @@
 int window_width  = 1280;
 int window_height = 720;
 
+glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera(glm::vec3(0.5, 0.5, 1));
 
-glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
+/* Point lights */
+
+/* Dir lights */
+DirLight dirLightSky(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(1), glm::vec3(0), glm::vec3(0));
+DirLight dirLightMain(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0.3, 0.3, 0.3), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1));
+
+/* Spot lights */
+SpotLight spotLight0(glm::vec3(0), glm::vec3(0, 0, 1), glm::radians(30.0f), glm::radians(40.0f), 1.0, 0.7, 1.8, glm::vec3(0), glm::vec3(1.0, 1.0, 0.8), glm::vec3(1.0, 1.0, 0.8));
+SpotLight spotLight1(glm::vec3(0), glm::vec3(0, 0, 1), glm::radians(30.0f), glm::radians(40.0f), 1.0, 0.7, 1.8, glm::vec3(0), glm::vec3(1.0, 1.0, 0.8), glm::vec3(1.0, 1.0, 0.8));
+
+bool isJour = true;
 
 const int iterationCount = 45;
 
@@ -46,8 +58,28 @@ std::function<void()> keyFuncs[NUM_KEYS] = {
 bool isButtonRightPress = false; 
 double pPos[2] = {false}; // x and y
 
+static void jourNuit() {
+    if(isJour) {
+        dirLightSky.ambient = glm::vec3(0.4);
+        dirLightMain.diffuse = glm::vec3(0);
+        dirLightMain.specular = glm::vec3(0);
+        isJour = false;
+    } else {
+        dirLightSky.ambient = glm::vec3(1);
+        dirLightMain.diffuse = glm::vec3(1);
+        dirLightMain.specular = glm::vec3(1);
+        isJour = true;
+    }
+}
+
 static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int action, int /*mods*/)
 {
+
+    if(key == GLFW_KEY_J && action == GLFW_PRESS) {
+        jourNuit();
+        return;
+    }
+
     for(int i = 0; i < NUM_KEYS; i++) {
         if(key == KEYS[i]) {
             if(action == GLFW_PRESS) {
@@ -256,23 +288,23 @@ int main(int argc, char * argv[])
 
     glimac::FilePath applicationPath(argv[0]);
     EditProgram backGroundProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
-    EditProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 0);
+    EditProgram mainProgram = LightsTextsProgram(applicationPath, "Projet/shaders/3D.vs.glsl", "Projet/shaders/LightsText.fs.glsl", true, 1, 0, 2);
 
     /* Init des textures */
 
-    Texture sky(applicationPath.dirPath() + "/assets/textures/cieltest.jpg", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture ground(applicationPath.dirPath() + "/assets/textures/testSol.png", Material(glm::vec3(0.3, 0.4, 0.3), glm::vec3(1), glm::vec3(0.1,0.2,0.1), 20.0f));
-    Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(1), glm::vec3(1), 100.0f));
-    Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 10.0f));
-    Texture testPad(applicationPath.dirPath() + "/assets/textures/testPad.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 50.0f));
-    Texture iron(applicationPath.dirPath() + "/assets/textures/poteau.png",Material(glm::vec3(0.7, 0.4, 0.4), glm::vec3(1), glm::vec3(1), 200.0f));
-    Texture solWagon(applicationPath.dirPath() + "/assets/textures/solWagon.png",Material(glm::vec3(0.5, 0.6, 0.5), glm::vec3(0.8,0.9,0.8), glm::vec3(0.1,0.2,0.1), 10.0f));
+    Texture sky(applicationPath.dirPath() + "/assets/textures/ciel.jpg", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture ground(applicationPath.dirPath() + "/assets/textures/sol.png", Material(glm::vec3(0.3, 0.4, 0.3), glm::vec3(1), glm::vec3(0.1,0.2,0.1), 20.0f));
+    Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png", Material(glm::vec3(0.3, 0.3, 0.3), glm::vec3(1), glm::vec3(1), 100.0f));
+    Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png", Material(glm::vec3(0.3, 0.3, 0.3), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 10.0f));
+    Texture pad(applicationPath.dirPath() + "/assets/textures/pad.png", Material(glm::vec3(0.3, 0.3, 0.3), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 50.0f));
+    Texture iron(applicationPath.dirPath() + "/assets/textures/poteau.png",Material(glm::vec3(0.3, 0.2, 0.2), glm::vec3(1), glm::vec3(1), 200.0f));
+    Texture solWagon(applicationPath.dirPath() + "/assets/textures/solWagon.png",Material(glm::vec3(0.2, 0.3, 0.2), glm::vec3(0.8,0.9,0.8), glm::vec3(0.1,0.2,0.1), 10.0f));
 
     GLuint tSky = sky.getID();
     GLuint tGround = ground.getID();
     GLuint tAlu = alu.getID();
     GLuint tBois = bois.getID();
-    GLuint tTest = testPad.getID();
+    GLuint tCote = pad.getID();
     GLuint tIron = iron.getID();
     GLuint tSolWagon = solWagon.getID();
 
@@ -307,13 +339,16 @@ int main(int argc, char * argv[])
     GLuint vao_Lame = lame.getVAO();
 
     // wagon
-    glimac::Pad wagB = glimac::Pad(0.01, 0.35, 0.3);
-    GLuint vao_wagB = wagB.getVAO();
+    glm::vec3 initPosWagon = glm::vec3(-0.325, 0.53, 0);
     double wagonTranslation = 0;
     int direction = 1;
-
+    
+    glimac::Pad wagB = glimac::Pad(0.01, 0.35, 0.3);
+    GLuint vao_wagB = wagB.getVAO();
+    
     glimac::Pad wagC = glimac::Pad(0.14, 0.01, 0.28);
     GLuint vao_wagC = wagC.getVAO();
+
     glimac::Pad wagD = glimac::Pad(0.14, 0.35, 0.01);
     GLuint vao_wagD = wagD.getVAO();
 
@@ -324,15 +359,8 @@ int main(int argc, char * argv[])
     glm::mat4 MMatrix;
 
     /* Launch thread for input keyboard */
-    std::thread thread_key(key_loop);
-        
-    /* Point lights */
+    std::thread thread_key(key_loop);    
 
-    /* Dir lights */
-    glm::vec4 dirLight(-0.5, -0.5, -0.5, 0);
-
-    /* Spot lights */
-    
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.75f, 0.75f, 0.f, 1.f);
@@ -340,15 +368,9 @@ int main(int argc, char * argv[])
 
         VMatrix = freeflyCamera.getViewMatrix();
 
-        glm::vec4 uDirLight = VMatrix * dirLight;
-
         /* backGround Program */
         backGroundProgram.m_Program.use();
-        glUniform1i(backGroundProgram.getLocation("uIsDirLight"), 1);
-        glUniform3f(backGroundProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
-        glUniform3f(backGroundProgram.getLocation("uDirLight.ambient"), 1,1,1);
-        glUniform3f(backGroundProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
-        glUniform3f(backGroundProgram.getLocation("uDirLight.specular"), 0, 0, 0);
+        dirLightSky.setLight(&backGroundProgram, VMatrix);
         glUniform3f(backGroundProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
         
         // Sky
@@ -363,11 +385,7 @@ int main(int argc, char * argv[])
         /* MainProgram */
 
         mainProgram.m_Program.use();
-        glUniform1i(mainProgram.getLocation("uIsDirLight"), 1);
-        glUniform3f(mainProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
-        glUniform3f(mainProgram.getLocation("uDirLight.ambient"), 0.1, 0.1, 0.1);
-        glUniform3f(mainProgram.getLocation("uDirLight.diffuse"), 1, 1, 1);
-        glUniform3f(mainProgram.getLocation("uDirLight.specular"), 1, 1, 1);
+        dirLightMain.setLight(&mainProgram, VMatrix);
         glUniform3f(mainProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
 
         // Ground
@@ -428,7 +446,6 @@ int main(int argc, char * argv[])
         // wagB
         glBindVertexArray(vao_wagB);
         setMaterial1t(&mainProgram, solWagon.getMaterial(), tSolWagon);
-        glm::vec3 initPosWagon = glm::vec3(-0.325, 0.53, 0);
         
         MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0, wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
@@ -436,31 +453,37 @@ int main(int argc, char * argv[])
         
         // wagCG
         glBindVertexArray(vao_wagC);
-        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        setMaterial1t(&mainProgram, pad.getMaterial(), tCote);
         MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0.34, 0.01, 0.01 + wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
         glDrawArrays(GL_TRIANGLES, 0, wagC.getVertexCount());
 
         // wagCD
         glBindVertexArray(vao_wagC);
-        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        setMaterial1t(&mainProgram, pad.getMaterial(), tCote);
         MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, 0.01 + wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
         glDrawArrays(GL_TRIANGLES, 0, wagC.getVertexCount());
 
         // wagDer
         glBindVertexArray(vao_wagD);
-        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        setMaterial1t(&mainProgram, pad.getMaterial(), tCote);
         MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
         glDrawArrays(GL_TRIANGLES, 0, wagD.getVertexCount());
 
         // wagDevant
         glBindVertexArray(vao_wagD);
-        setMaterial1t(&mainProgram, testPad.getMaterial(), tTest);
+        setMaterial1t(&mainProgram, pad.getMaterial(), tCote);
         MMatrix = glm::translate(glm::mat4(1), initPosWagon + glm::vec3(0, 0.01, 0.29 + wagonTranslation));
         initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
         glDrawArrays(GL_TRIANGLES, 0, wagD.getVertexCount());
+
+        // Phare
+        spotLight0.position = initPosWagon + glm::vec3(0.11, 0.05, 0.30 + wagonTranslation);
+        spotLight0.setLight(&mainProgram, VMatrix, 0);
+        spotLight1.position = initPosWagon + glm::vec3(0.33, 0.05, 0.30 + wagonTranslation);
+        spotLight1.setLight(&mainProgram, VMatrix, 1);
 
         wagonTranslation += 0.01 * direction;
         if(wagonTranslation >= 4.8) {

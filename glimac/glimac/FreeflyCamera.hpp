@@ -14,6 +14,11 @@ namespace glimac {
                 computeDirectionVectors();
             };
 
+            FreeflyCamera(glm::vec3 position) : m_Position(position), m_fPhi(M_PI), m_fTheta(0.f)
+            {
+                computeDirectionVectors();
+            };
+
             void computeDirectionVectors();
             void moveLeft(float t);
             void moveFront(float t);

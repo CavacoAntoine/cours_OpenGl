@@ -115,10 +115,10 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon   = light.cutOff - light.outerCutOff;
-    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0); 
+    float epsilon   = light.outerCutOff - light.cutOff;
+    float intensity = clamp((theta - light.cutOff) / epsilon, 0.0, 1.0); 
     
-    if(theta > light.outerCutOff) 
+    if(theta > light.cutOff) 
     {       
         // diffuse shading
         float diff = max(dot(normal, lightDir), 0.0);
