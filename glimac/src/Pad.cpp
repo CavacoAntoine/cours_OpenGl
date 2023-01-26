@@ -53,38 +53,38 @@ namespace glimac {
         // Face B Triangle 1
         vertex.texCoords.x = 0.6666;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, 0, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 0.6666;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, height, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 1;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, 0, width);
         m_Vertices.push_back(vertex);
 
         // Face B Triangle 2
         vertex.texCoords.x = 0.6666;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, height, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 1;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, 0, width);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 1;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(-1,0,0);
+        vertex.normal = glm::vec3(1,0,0);
         vertex.position = glm::vec3(length, height, width);
         m_Vertices.push_back(vertex);
         
@@ -131,38 +131,38 @@ namespace glimac {
         // Face D Triangle 1
         vertex.texCoords.x = 0;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, 0, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 0;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, height, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 0.3333;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, 0, width);
         m_Vertices.push_back(vertex);
 
         // Face D Triangle 2
         vertex.texCoords.x = 0;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, height, 0);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 0.3333;
         vertex.texCoords.y = 0.75;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, 0, width);
         m_Vertices.push_back(vertex);
 
         vertex.texCoords.x = 0.3333;
         vertex.texCoords.y = 0.5;
-        vertex.normal = glm::vec3(1,0,0);
+        vertex.normal = glm::vec3(-1,0,0);
         vertex.position = glm::vec3(0, height, width);
         m_Vertices.push_back(vertex);
 

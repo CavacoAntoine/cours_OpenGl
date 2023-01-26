@@ -23,6 +23,7 @@
 int window_width  = 1280;
 int window_height = 720;
 
+
 glimac::FreeflyCamera freeflyCamera = glimac::FreeflyCamera();
 
 const int iterationCount = 45;
@@ -260,12 +261,12 @@ int main(int argc, char * argv[])
     /* Init des textures */
 
     Texture sky(applicationPath.dirPath() + "/assets/textures/cieltest.jpg", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture ground(applicationPath.dirPath() + "/assets/textures/testSol.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture testPad(applicationPath.dirPath() + "/assets/textures/testPad.png", Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture iron(applicationPath.dirPath() + "/assets/textures/poteau.png",Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
-    Texture solWagon(applicationPath.dirPath() + "/assets/textures/solWagon.png",Material(glm::vec3(1, 1, 1), glm::vec3(0), glm::vec3(0), 10.0f));
+    Texture ground(applicationPath.dirPath() + "/assets/textures/testSol.png", Material(glm::vec3(0.3, 0.4, 0.3), glm::vec3(1), glm::vec3(0.1,0.2,0.1), 20.0f));
+    Texture alu(applicationPath.dirPath() + "/assets/textures/rails.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(1), glm::vec3(1), 100.0f));
+    Texture bois(applicationPath.dirPath() + "/assets/textures/bois.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 10.0f));
+    Texture testPad(applicationPath.dirPath() + "/assets/textures/testPad.png", Material(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.8, 0.54, 0.38), glm::vec3(0.08, 0.06, 0.04), 50.0f));
+    Texture iron(applicationPath.dirPath() + "/assets/textures/poteau.png",Material(glm::vec3(0.7, 0.4, 0.4), glm::vec3(1), glm::vec3(1), 200.0f));
+    Texture solWagon(applicationPath.dirPath() + "/assets/textures/solWagon.png",Material(glm::vec3(0.5, 0.6, 0.5), glm::vec3(0.8,0.9,0.8), glm::vec3(0.1,0.2,0.1), 10.0f));
 
     GLuint tSky = sky.getID();
     GLuint tGround = ground.getID();
@@ -281,7 +282,7 @@ int main(int argc, char * argv[])
     GLuint vao_Sphere = sphere.getVAO();
 
     glimac::Pad background = glimac::Pad(1,100,100);
-    GLuint vao_Back = background.getVAO();
+    GLuint vao_Ground = background.getVAO();
 
     // Cylindre
     glimac::Cylinder cylindre = glimac::Cylinder(0.5, 0.03, 30, 30); 
@@ -328,7 +329,7 @@ int main(int argc, char * argv[])
     /* Point lights */
 
     /* Dir lights */
-    glm::vec4 dirLight(0.5, 0.5, 0.5, 0);
+    glm::vec4 dirLight(-0.5, -0.5, -0.5, 0);
 
     /* Spot lights */
     
@@ -358,26 +359,26 @@ int main(int argc, char * argv[])
         initMatrixs(&backGroundProgram, ProjMatrix, VMatrix, MMatrix);
 
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        
-        // Ground
-        glBindVertexArray(vao_Back);
-        setMaterial1t(&backGroundProgram, ground.getMaterial(), tGround);
-
-        MMatrix = glm::translate(glm::mat4(1), glm::vec3(-50, 0, 50));
-        MMatrix = glm::rotate(MMatrix, glm::radians(180.f), glm::vec3(1,0,0));
-        initMatrixs(&backGroundProgram, ProjMatrix, VMatrix, MMatrix);
-
-        glDrawArrays(GL_TRIANGLES, 0, background.getVertexCount());
 
         /* MainProgram */
 
         mainProgram.m_Program.use();
         glUniform1i(mainProgram.getLocation("uIsDirLight"), 1);
         glUniform3f(mainProgram.getLocation("uDirLight.direction"), uDirLight.x, uDirLight.y, uDirLight.z);
-        glUniform3f(mainProgram.getLocation("uDirLight.ambient"), 1,1,1);
-        glUniform3f(mainProgram.getLocation("uDirLight.diffuse"), 0, 0, 0);
-        glUniform3f(mainProgram.getLocation("uDirLight.specular"), 0, 0, 0);
+        glUniform3f(mainProgram.getLocation("uDirLight.ambient"), 0.1, 0.1, 0.1);
+        glUniform3f(mainProgram.getLocation("uDirLight.diffuse"), 1, 1, 1);
+        glUniform3f(mainProgram.getLocation("uDirLight.specular"), 1, 1, 1);
         glUniform3f(mainProgram.getLocation("uViewPos"), freeflyCamera.m_Position.x, freeflyCamera.m_Position.y, freeflyCamera.m_Position.z);
+
+        // Ground
+        glBindVertexArray(vao_Ground);
+        setMaterial1t(&mainProgram, ground.getMaterial(), tGround);
+
+        MMatrix = glm::translate(glm::mat4(1), glm::vec3(-50, 0, 50));
+        MMatrix = glm::rotate(MMatrix, glm::radians(180.f), glm::vec3(1,0,0));
+        initMatrixs(&mainProgram, ProjMatrix, VMatrix, MMatrix);
+
+        glDrawArrays(GL_TRIANGLES, 0, background.getVertexCount());
 
         // 1er rail droit
 

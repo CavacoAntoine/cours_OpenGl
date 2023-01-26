@@ -9,7 +9,7 @@ namespace glimac {
         public :
             glm::vec3 m_Position;
 
-            FreeflyCamera() : m_Position(glm::vec3(0,0,0)), m_fPhi(M_PI), m_fTheta(0.f)
+            FreeflyCamera() : m_Position(glm::vec3(0,0.1,0)), m_fPhi(M_PI), m_fTheta(0.f)
             {
                 computeDirectionVectors();
             };
